@@ -664,7 +664,6 @@
 
     const VALID_SUBJECT_SET = new Set(MPSC_SUBJECTS.map(s => s.key));
 
-    // Strong, mutually exclusive-leaning topic rules so each question lands strictly in its matching topic
     const TOPIC_KEYWORDS = {
       "राज्यघटना व प्रशासन": {
         "मूलभूत हक्क व मार्गदर्शक तत्त्वे": ["मूलभूत हक्क", "कलम १२", "कलम १३", "कलम १४", "कलम १९", "कलम २१", "कलम ३२", "मार्गदर्शक तत्त्वे", "मूलभूत कर्तव्ये", "स्वातंत्र्याचा हक्क", "समानतेचा हक्क", "शोषणाविरुद्ध", "धार्मिक स्वातंत्र्य", "fundamental rights", "dpsp", "directive principles"],
@@ -754,7 +753,7 @@
       }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v19";
+    const STATE_KEY = "mpsc_sarav_2026_state_v20";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -831,7 +830,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.remove("show"), 3800);
+      window._toastTimer = setTimeout(() => el.classList.remove("show"), 4000);
     }
 
     function copyText(txt, toastMsg) {
@@ -944,7 +943,6 @@
       }
     }
 
-    // Strict keyword-based segregator: never assigns mismatched topics when keywords don't match
     function classifySubjectAndTopic(q, fallbackIndex = 0) {
       const rawSubj = (q.subject || "").trim();
       const rawTopic = (q.topic || "").trim();
@@ -963,7 +961,6 @@
             if (!kw) continue;
             const kwClean = kw.toLowerCase().trim();
             if (!kwClean) continue;
-            // Word-boundary check for short ASCII tokens like 'un', 'ai', '368'
             if (/^[a-z0-9]+$/i.test(kwClean) && kwClean.length <= 4) {
               const re = new RegExp(`\\b${kwClean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
               if (re.test(qLower)) score += 3;
@@ -1052,6 +1049,48 @@
       };
     }
 
+    function parseCouponRowToRecord(r) {
+      const code = String(r.code || "").trim().toUpperCase();
+      if (!code) return null;
+      const parts = String(r.discount_label || "").split("|");
+      const sid = (parts[1] || "STU101").trim().toUpperCase();
+      const dev = (parts[2] || "").trim() || null;
+      const mob = (parts[3] || "").trim();
+      return {
+        code,
+        student_id: sid,
+        mobile: mob,
+        plan: "199_YEARLY",
+        device_id: dev,
+        active: r.active !== false,
+        created_at: new Date().toISOString().slice(0, 10)
+      };
+    }
+
+    async function fetchSinglePasscodeFromCloud(code) {
+      if (!appState.supabaseUrl || !appState.supabaseKey) return null;
+      try {
+        const cleanCode = encodeURIComponent(code.trim().toUpperCase());
+        const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_coupons?code=eq.${cleanCode}&select=code,discount_label,active&limit=1`, {
+          headers: {
+            apikey: appState.supabaseKey,
+            Authorization: `Bearer ${appState.supabaseKey}`
+          }
+        });
+        if (!res.ok) return null;
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const rec = parseCouponRowToRecord(rows[0]);
+          if (rec) {
+            appState.passcodes[rec.code] = rec;
+            saveState();
+            return rec;
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
     async function pullPasscodesFromCloud() {
       if (!appState.supabaseUrl || !appState.supabaseKey) return;
       try {
@@ -1066,29 +1105,17 @@
         if (!Array.isArray(rows)) return;
         let changed = false;
         rows.forEach(r => {
-          const code = String(r.code || "").trim().toUpperCase();
-          if (!code) return;
-          const parts = String(r.discount_label || "").split("|");
-          const sid = (parts[1] || "STU101").trim().toUpperCase();
-          const dev = (parts[2] || "").trim() || null;
-          const mob = (parts[3] || "").trim();
-          const existing = appState.passcodes[code];
+          const rec = parseCouponRowToRecord(r);
+          if (!rec) return;
+          const existing = appState.passcodes[rec.code];
           if (!existing) {
-            appState.passcodes[code] = {
-              code,
-              student_id: sid,
-              mobile: mob,
-              plan: "199_YEARLY",
-              device_id: dev,
-              active: r.active !== false,
-              created_at: new Date().toISOString().slice(0, 10)
-            };
+            appState.passcodes[rec.code] = rec;
             changed = true;
           } else {
-            existing.student_id = sid || existing.student_id;
-            existing.active = r.active !== false;
-            if (dev) existing.device_id = dev;
-            if (mob) existing.mobile = mob;
+            existing.student_id = rec.student_id || existing.student_id;
+            existing.active = rec.active;
+            if (rec.device_id) existing.device_id = rec.device_id;
+            if (rec.mobile) existing.mobile = rec.mobile;
             changed = true;
           }
         });
@@ -1096,7 +1123,7 @@
       } catch (e) {}
     }
 
-    function verifyPasscodeBinding(studentIdRaw, codeRaw) {
+    async function verifyPasscodeBindingAsync(studentIdRaw, codeRaw) {
       const studentId = (studentIdRaw || "").trim().toUpperCase();
       const code = (codeRaw || "").trim().toUpperCase();
 
@@ -1104,9 +1131,15 @@
         return { ok: false, msg: "कृपया Student ID आणि Passcode दोन्ही टाका." };
       }
 
-      const record = appState.passcodes[code];
-      if (!record || record.active === false) {
-        return { ok: false, msg: "हा Passcode अस्तित्वात नाही किंवा बंद (Revoked) केला आहे." };
+      // Always check Supabase live first so codes created on another device/session are recognized
+      const cloudRec = await fetchSinglePasscodeFromCloud(code);
+      const record = cloudRec || appState.passcodes[code];
+
+      if (!record) {
+        return { ok: false, msg: `Passcode '${code}' सापडला नाही. Admin मधून Cloud Sync तपासा किंवा नवा कोड घ्या.` };
+      }
+      if (record.active === false) {
+        return { ok: false, msg: `Passcode '${code}' बंद (Revoked) केला आहे.` };
       }
 
       if (record.student_id.toUpperCase() !== studentId) {
@@ -1114,33 +1147,36 @@
       }
 
       if (record.device_id && record.device_id !== CURRENT_DEVICE_ID) {
-        return { ok: false, msg: `हा Passcode आधीच दुसऱ्या डिव्हाइसवर (${record.device_id}) लॉक आहे. दुसऱ्या डिव्हाइसवर चालणार नाही.` };
+        return { ok: false, msg: `हा Passcode आधीच दुसऱ्या डिव्हाइसवर (${record.device_id}) लॉक आहे. दुसऱ्या डिव्हाइसवर वापरता येणार नाही.` };
       }
 
       if (!record.device_id) {
         record.device_id = CURRENT_DEVICE_ID;
       }
 
+      appState.passcodes[code] = record;
       appState.boundStudentId = studentId;
       appState.activePasscode = code;
       appState.isProUnlocked = true;
       saveState();
-      syncCloudPasscode(record);
+      await syncCloudPasscode(record);
       return { ok: true, msg: `Pro ₹199 प्लॅन सक्रिय! (${studentId} • ${CURRENT_DEVICE_ID} वर लॉक)` };
     }
 
-    function activateStudentPasscode() {
+    async function activateStudentPasscode() {
       const sid = document.getElementById("passcodeStudentId").value;
       const code = document.getElementById("passcodeInput").value;
-      const res = verifyPasscodeBinding(sid, code);
+      showToast("Passcode तपासत आहे...");
+      const res = await verifyPasscodeBindingAsync(sid, code);
       showToast(res.msg);
       if (res.ok) renderAll();
     }
 
-    function activateFromModal() {
+    async function activateFromModal() {
       const sid = document.getElementById("modalStudentId").value;
       const code = document.getElementById("modalPasscode").value;
-      const res = verifyPasscodeBinding(sid, code);
+      showToast("Passcode तपासत आहे...");
+      const res = await verifyPasscodeBindingAsync(sid, code);
       showToast(res.msg);
       if (res.ok) {
         closeModal("proModal");
@@ -1191,9 +1227,9 @@
     }
 
     async function syncCloudPasscode(record) {
-      if (!appState.supabaseUrl || !appState.supabaseKey) return;
+      if (!appState.supabaseUrl || !appState.supabaseKey) return false;
       try {
-        await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_coupons?on_conflict=code`, {
+        const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_coupons?on_conflict=code`, {
           method: "POST",
           headers: {
             apikey: appState.supabaseKey,
@@ -1207,7 +1243,20 @@
             active: record.active !== false
           })
         });
-      } catch (e) {}
+        return res.ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function syncAllPasscodesToCloud() {
+      const list = Object.values(appState.passcodes);
+      let okCount = 0;
+      for (const rec of list) {
+        const ok = await syncCloudPasscode(rec);
+        if (ok) okCount++;
+      }
+      showToast(`${okCount} / ${list.length} Passcodes Cloud वर सिंक झाले.`);
     }
 
     async function syncQuestionsToCloud() {
@@ -1623,13 +1672,13 @@
       showToast("Admin पासवर्ड यशस्वीरित्या बदलला!");
     }
 
-    function createSingleDevicePasscode() {
+    async function createSingleDevicePasscode() {
       const sid = (document.getElementById("newPassStudentId").value || "").trim().toUpperCase();
       const mob = (document.getElementById("newPassMobile")?.value || "").trim();
       let code = (document.getElementById("newPassCode").value || "").trim().toUpperCase();
       if (!sid) { showToast("कृपया Student ID टाका (उदा. STU102)."); return; }
       if (!code) code = "MPSC-199-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-      appState.passcodes[code] = {
+      const rec = {
         code,
         student_id: sid,
         mobile: mob,
@@ -1638,30 +1687,33 @@
         active: true,
         created_at: new Date().toISOString().slice(0, 10)
       };
+      appState.passcodes[code] = rec;
       saveState();
-      syncCloudPasscode(appState.passcodes[code]);
+      const synced = await syncCloudPasscode(rec);
       document.getElementById("newPassStudentId").value = "";
       if (document.getElementById("newPassMobile")) document.getElementById("newPassMobile").value = "";
       document.getElementById("newPassCode").value = "";
-      showToast(`Passcode ${code} तयार (${sid} • 1 Device Lock).`);
+      showToast(synced
+        ? `Passcode ${code} तयार व Cloud वर सेव्ह (${sid} • 1 Device Lock).`
+        : `Passcode ${code} तयार (${sid}). Cloud सिंकसाठी SQL Policy तपासा.`);
       renderAll();
     }
 
-    function resetPasscodeDevice(code) {
+    async function resetPasscodeDevice(code) {
       if (appState.passcodes[code]) {
         appState.passcodes[code].device_id = null;
         saveState();
-        syncCloudPasscode(appState.passcodes[code]);
+        await syncCloudPasscode(appState.passcodes[code]);
         showToast(`${code} साठी Device Lock रीसेट केला.`);
         renderAll();
       }
     }
 
-    function togglePasscodeActive(code) {
+    async function togglePasscodeActive(code) {
       if (appState.passcodes[code]) {
         appState.passcodes[code].active = !appState.passcodes[code].active;
         saveState();
-        syncCloudPasscode(appState.passcodes[code]);
+        await syncCloudPasscode(appState.passcodes[code]);
         showToast(`${code} स्थिती अद्ययावत केली.`);
         renderAll();
       }
@@ -2215,14 +2267,15 @@
             <div class="stat-box" style="margin-bottom:14px;">
               <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3>
               <div class="grid-4" style="margin-bottom:8px;">
-                <input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. STU102)" />
+                <input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. MAYURI2000)" />
                 <input id="newPassMobile" name="newPassMobile" class="input" placeholder="विद्यार्थी मोबाइल (पर्यायी)" />
                 <input id="newPassCode" name="newPassCode" class="input" placeholder="Passcode (रिकामे सोडल्यास ऑटो तयार होईल)" />
                 <button class="btn btn-primary" onclick="createSingleDevicePasscode()">+ Passcode तयार करा</button>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-sm" onclick="exportPasscodesJson()">💾 Passcodes JSON डाउनलोड करा</button>
-                <button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes Sync करा</button>
+                <button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes घ्या</button>
+                <button class="btn btn-sm btn-primary" onclick="syncAllPasscodesToCloud()">⬆ सर्व Passcodes Cloud वर पाठवा</button>
               </div>
             </div>
 
