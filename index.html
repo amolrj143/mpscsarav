@@ -507,6 +507,11 @@
     const WHATSAPP_NUMBER = "918554011484";
     const UPI_AMOUNT = "199";
     const PAYEE_NAME = "MPSC Sarav 2026-27";
+    const PORTAL_PUBLIC_URL = "https://amolrj143.github.io/mpscsarav/";
+
+    const GITHUB_REPO_OWNER = "amolrj143";
+    const GITHUB_REPO_NAME = "mpsc-sarav-questions";
+    const GITHUB_REPO_BRANCH = "main";
 
     const IDB_NAME = "MPSC_Sarav_Chunked_DB_v1";
     const IDB_STORE = "q_chunks";
@@ -531,7 +536,7 @@
     }
 
     function yieldFrame() {
-      return new Promise(r => setTimeout(r, 15));
+      return new Promise(r => setTimeout(r, 10));
     }
 
     async function saveQuestionsChunked(questionsArr) {
@@ -659,50 +664,51 @@
 
     const VALID_SUBJECT_SET = new Set(MPSC_SUBJECTS.map(s => s.key));
 
+    // Strong, mutually exclusive-leaning topic rules so each question lands strictly in its matching topic
     const TOPIC_KEYWORDS = {
       "राज्यघटना व प्रशासन": {
-        "मूलभूत हक्क व मार्गदर्शक तत्त्वे": ["मूलभूत हक्क", "कलम १२", "कलम १९", "कलम २१", "कलम ३२", "मार्गदर्शक तत्त्वे", "मूलभूत कर्तव्ये", "स्वातंत्र्याचा हक्क", "समानतेचा हक्क", "fundamental rights", "dpsp"],
-        "संसद, राष्ट्रपती व न्यायव्यवस्था": ["राष्ट्रपती", "उपराष्ट्रपती", "संसद", "लोकसभा", "राज्यसभा", "पंतप्रधान", "मुख्यमंत्री", "राज्यपाल", "सर्वोच्च न्यायालय", "उच्च न्यायालय", "महाभियोग", "घटनेतील", "संविधान", "कलम ", "article", "parliament", "president", "constitution"],
-        "पंचायत राज व स्थानिक स्वराज्य": ["पंचायत राज", "ग्रामपंचायत", "जिल्हा परिषद", "पंचायत समिती", "७३वी", "७४वी", "नगरपालिका", "महानगरपालिका", "सरपंच", "स्थानिक स्वराज्य"],
-        "RTI, RTS व लोकसेवा हक्क": ["माहितीचा अधिकार", "rti", "नागरिकांची सनद", "लोकसेवा हक्क", "rts", "आयोग", "महासंचालक", "निवडणूक आयोग", "cag"]
+        "मूलभूत हक्क व मार्गदर्शक तत्त्वे": ["मूलभूत हक्क", "कलम १२", "कलम १३", "कलम १४", "कलम १९", "कलम २१", "कलम ३२", "मार्गदर्शक तत्त्वे", "मूलभूत कर्तव्ये", "स्वातंत्र्याचा हक्क", "समानतेचा हक्क", "शोषणाविरुद्ध", "धार्मिक स्वातंत्र्य", "fundamental rights", "dpsp", "directive principles"],
+        "संसद, राष्ट्रपती व न्यायव्यवस्था": ["कलम 368", "कलम ३६८", "368", "३६८", "घटनादुरुस्ती", "संविधान दुरुस्ती", "राष्ट्रपती", "उपराष्ट्रपती", "संसद", "लोकसभा", "राज्यसभा", "पंतप्रधान", "मुख्यमंत्री", "राज्यपाल", "सर्वोच्च न्यायालय", "उच्च न्यायालय", "महाभियोग", "घटनेतील", "संविधान", "कलम ", "article ", "parliament", "president", "constitution", "amendment"],
+        "पंचायत राज व स्थानिक स्वराज्य": ["पंचायत राज", "ग्रामपंचायत", "जिल्हा परिषद", "पंचायत समिती", "७३वी", "७३ वी", "७४वी", "७४ वी", "नगरपालिका", "महानगरपालिका", "सरपंच", "स्थानिक स्वराज्य", "वसंतराव नाईक", "पी. बी. पाटील", "बलवंतराय मेहता"],
+        "RTI, RTS व लोकसेवा हक्क": ["माहितीचा अधिकार", "rti", "नागरिकांची सनद", "लोकसेवा हक्क", "rts", "महासंचालक", "निवडणूक आयोग", "cag", "कॅग", "महाराष्ट्र लोकसेवा आयोग", "mpsc"]
       },
       "इतिहास": {
-        "आधुनिक भारताचा इतिहास": ["१८५७", "राष्ट्रीय सभा", "काँग्रेस", "गांधीजी", "गांधी", "असहकार", "सविनय कायदेभंग", "चले जाव", "व्हाइसरॉय", "गव्हर्नर", "कायदा", "मोर्ले", "माँटेग्यू", "टिळक", "नेहरू", "सुभाषचंद्र", "भगतसिंग", "swaraj", "congress", "act 19"],
-        "महाराष्ट्रातील समाजसुधारक": ["फुले", "शाहू", "आंबेडकर", "आगरकर", "कर्वे", "सत्यशोधक", "बहिष्कृत", "समाजसुधारक", "विठ्ठल रामजी शिंदे", "गोपाळ हरी देशमुख", "धोंडो केशव", "रमाबाई"],
-        "स्वराज्य व मराठा साम्राज्य": ["शिवाजी", "स्वराज्य", "पेशवे", "मराठा", "किल्ला", "संभाजी", "अष्टप्रधान", "बाजीराव", "तान्हाजी", "रायगड", "प्रतापगड", "सल्तनत", "मुघल", "विजयनगर"]
+        "आधुनिक भारताचा इतिहास": ["१८५७", "1857", "राष्ट्रीय सभा", "काँग्रेस", "गांधीजी", "गांधी", "असहकार", "सविनय कायदेभंग", "चले जाव", "व्हाइसरॉय", "गव्हर्नर", "मोर्ले", "माँटेग्यू", "टिळक", "नेहरू", "सुभाषचंद्र", "भगतसिंग", "swaraj", "congress", "act 1909", "act 1919", "act 1935"],
+        "महाराष्ट्रातील समाजसुधारक": ["फुले", "शाहू", "आंबेडकर", "आगरकर", "कर्वे", "सत्यशोधक", "बहिष्कृत", "समाजसुधारक", "विठ्ठल रामजी शिंदे", "गोपाळ हरी देशमुख", "धोंडो केशव", "रमाबाई", "गोपाळ गणेश आगरकर"],
+        "स्वराज्य व मराठा साम्राज्य": ["शिवाजी", "स्वराज्य", "पेशवे", "मराठा", "किल्ला", "संभाजी", "अष्टप्रधान", "बाजीराव", "तान्हाजी", "रायगड", "प्रतापगड", "सल्तनत", "मुघल", "विजयनगर", "छत्रपती"]
       },
       "भूगोल": {
-        "महाराष्ट्राचा भूगोल": ["सह्याद्री", "गोदावरी", "कृष्णा", "तापी", "कोकण", "घाट", "पठार", "मृदा", "पाऊस", "भीमा", "वर्धा", "वैनगंगा", "धरण", "बंदर", "महाराष्ट्रातील", "जिल्हा", "विदर्भ", "मराठवाडा"],
-        "भारताचा व जगाचा भूगोल": ["हिमालय", "मान्सून", "नदी", "खनिज", "अक्षांश", "रेखांश", "वाळवंट", "अभयारण्य", "बंगालचा उपसागर", "अरबी समुद्र", "द्वीपकल्प", "पर्वत", "लोकसंख्या", "जनगणना", "geography", "river", "mountain"],
-        "पर्यावरण व हवामान बदल": ["पर्यावरण", "जैवविविधता", "प्रदूषण", "हवामान", "वनस्पती", "राष्ट्रीय उद्यान", "रामसर", "ओझोन", "कार्बन", "वनक्षेत्र", "ecology", "biodiversity"]
+        "महाराष्ट्राचा भूगोल": ["सह्याद्री", "गोदावरी", "कृष्णा", "तापी", "कोकण", "घाट", "पठार", "मृदा", "भीमा", "वर्धा", "वैनगंगा", "धरण", "बंदर", "महाराष्ट्रातील", "जिल्हा", "विदर्भ", "मराठवाडा", "खानदेश", "त्र्यंबकेश्वर", "महाबळेश्वर"],
+        "भारताचा व जगाचा भूगोल": ["हिमालय", "मान्सून", "नदी", "खनिज", "अक्षांश", "रेखांश", "वाळवंट", "अभयारण्य", "बंगालचा उपसागर", "अरबी समुद्र", "द्वीपकल्प", "पर्वत", "लोकसंख्या", "जनगणना", "geography", "river", "mountain", "latitude", "longitude"],
+        "पर्यावरण व हवामान बदल": ["पर्यावरण", "जैवविविधता", "प्रदूषण", "हवामान", "वनस्पती", "राष्ट्रीय उद्यान", "रामसर", "ओझोन", "कार्बन", "वनक्षेत्र", "ecology", "biodiversity", "ozone", "ramsar"]
       },
       "अर्थव्यवस्था": {
-        "भारतीय व महाराष्ट्र अर्थव्यवस्था": ["अर्थसंकल्प", "gdp", "जीडीपी", "महागाई", "रिझर्व्ह बँक", "rbi", "कर", "gst", "बँक", "चलन", "रेपो", "महसूल", "वित्तीय", "व्यापार", "निर्यात", "आयात", "economy", "budget", "tax", "bank"],
-        "पंचवार्षिक योजना व दारिद्र्य": ["योजना", "दारिद्र्य", "बेरोजगारी", "नीती आयोग", "शेती", "उद्योग", "सबसिडी", "पंचवार्षिक", "कृषी", "उत्पन्न", "मजुरी", "विकास दर"]
+        "भारतीय व महाराष्ट्र अर्थव्यवस्था": ["अर्थसंकल्प", "gdp", "जीडीपी", "महागाई", "रिझर्व्ह बँक", "rbi", "gst", "बँक", "चलन", "रेपो", "महसूल", "वित्तीय", "व्यापार", "निर्यात", "आयात", "economy", "budget", "tax", "bank", "monetary"],
+        "पंचवार्षिक योजना व दारिद्र्य": ["योजना", "दारिद्र्य", "बेरोजगारी", "नीती आयोग", "शेती", "उद्योग", "सबसिडी", "पंचवार्षिक", "कृषी", "उत्पन्न", "मजुरी", "विकास दर", "poverty", "unemployment", "planning commission"]
       },
       "सामान्य विज्ञान": {
-        "भौतिकशास्त्र व रसायनशास्त्र": ["वेग", "बल", "विद्युत", "प्रकाश", "ध्वनी", "आम्ल", "अल्कली", "धातू", "अणू", "ऊर्जा", "उष्णता", "तरंग", "भिंग", "आरसा", "विद्युतप्रवाह", "रासायनिक", "वायू", "ऑक्सिजन", "हायड्रोजन", "द्रव्य", "physics", "chemistry", "force", "light", "acid", "element"],
-        "जीवशास्त्र व आरोग्य": ["पेशी", "रक्त", "जीवनसत्त्व", "रोग", "वनस्पती", "हृदय", "मज्जासंस्था", "पोषण", "लस", "प्रथिने", "कर्बोदके", "पचन", "श्वसन", "जिवाणू", "विषाणू", "पेशीभित्तिका", "गुणसूत्र", "biology", "vitamin", "disease", "cell", "blood"]
+        "भौतिकशास्त्र व रसायनशास्त्र": ["वेग", "बल", "विद्युत", "प्रकाश", "ध्वनी", "आम्ल", "अल्कली", "धातू", "अणू", "ऊर्जा", "उष्णता", "तरंग", "भिंग", "आरसा", "विद्युतप्रवाह", "रासायनिक", "वायू", "ऑक्सिजन", "हायड्रोजन", "द्रव्य", "physics", "chemistry", "force", "light", "acid", "element", "velocity", "current"],
+        "जीवशास्त्र व आरोग्य": ["पेशी", "रक्त", "जीवनसत्त्व", "रोग", "वनस्पती", "हृदय", "मज्जासंस्था", "पोषण", "लस", "प्रथिने", "कर्बोदके", "पचन", "श्वसन", "जिवाणू", "विषाणू", "पेशीभित्तिका", "गुणसूत्र", "biology", "vitamin", "disease", "cell", "blood", "vaccine", "bacteria", "virus"]
       },
       "अंकगणित व बुद्धिमत्ता": {
-        "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)": ["शेती", "नफा", "तोटा", "व्याज", "गुणोत्तर", "सरासरी", "वेग आणि अंतर", "काम", "टक्के", "सरळव्याज", "चक्रवाढ", "अपूर्णांक", "दशांश", "वर्गमूळ", "घनमूळ", "समीकरण", "तास", "मिनिटे", "रुपये", "संख्या", "बेरीज", "वजाबाकी", "गुणाकार", "भागाकार", "क्षेत्रफळ", "परिघ", "वर्तुळ", "त्रिकोण"],
-        "बुद्धिमत्ता चाचणी व तर्क": ["मालिका", "कोडिंग", "नातेसंबंध", "दिशा", "आकृती", "तर्क", "घड्याळ", "कॅलेंडर", "अक्षरमाला", "विजोड", "समान संबंध", "वेन आकृती", "विधान", "निष्कर्ष", "series", "coding", "ratio", "average", "profit", "percent"]
+        "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)": ["शेती", "नफा", "तोटा", "व्याज", "गुणोत्तर", "सरासरी", "वेग आणि अंतर", "काम", "टक्के", "सरळव्याज", "चक्रवाढ", "अपूर्णांक", "दशांश", "वर्गमूळ", "घनमूळ", "समीकरण", "क्षेत्रफळ", "परिघ", "वर्तुळ", "त्रिकोण", "ratio", "average", "profit", "loss", "interest", "percentage", "area"],
+        "बुद्धिमत्ता चाचणी व तर्क": ["सांकेतिक", "कोड", "मालिका", "कोडिंग", "नातेसंबंध", "दिशा", "आकृती", "तर्क", "घड्याळ", "कॅलेंडर", "अक्षरमाला", "विजोड", "समान संबंध", "वेन आकृती", "विधान", "निष्कर्ष", "series", "coding", "decoding", "blood relation", "calendar", "clock", "syllogism"]
       },
       "मराठी व्याकरण व आकलन": {
-        "शब्दसिद्धी, नाम, सर्वनाम व क्रियापद": ["नाम", "सर्वनाम", "विशेषण", "क्रियापद", "समास", "संधी", "प्रयोग", "काळ", "विभक्ती", "अव्यय", "वाक्य", "उद्देश", "विधेय", "केवल प्रयोगी", "उभयान्वयी", "शब्दयोगी", "मराठी व्याकरण"],
+        "शब्दसिद्धी, नाम, सर्वनाम व क्रियापद": ["नाम", "सर्वनाम", "विशेषण", "क्रियापद", "समास", "संधी", "प्रयोग", "काळ", "विभक्ती", "अव्यय", "वाक्य", "उद्देश", "विधेय", "केवल प्रयोगी", "उभयान्वयी", "शब्दयोगी", "मराठी व्याकरण", "उतारा", "परिच्छेद"],
         "वाक्प्रचार, म्हणी व शब्दसंग्रह": ["वाक्प्रचार", "म्हण", "समानार्थी", "विरुद्धार्थी", "शब्दसमूह", "अलंकार", "वृत्त", "रस", "जोडशब्द", "शुद्धलेखन", "पुढीलपैकी कोणता शब्द"]
       },
       "इंग्रजी व्याकरण व आकलन": {
-        "Grammar, Tense & Voice": ["tense", "verb", "noun", "preposition", "article", "voice", "narration", "clause", "sentence", "adverb", "adjective", "conjunction", "pronoun", "subject", "grammar", "fill in the blank", "choose the correct"],
+        "Grammar, Tense & Voice": ["tense", "verb", "noun", "preposition", "article", "voice", "narration", "clause", "sentence", "adverb", "adjective", "conjunction", "pronoun", "subject", "grammar", "fill in the blank", "choose the correct", "active", "passive"],
         "Vocabulary & Comprehension": ["synonym", "antonym", "idiom", "phrase", "spelling", "passage", "meaning of", "opposite of", "one word", "comprehension"]
       },
       "चालू घडामोडी": {
-        "राष्ट्रीय घडामोडी": ["राष्ट्रीय", "पंतप्रधान", "केंद्रीय", "संसद अधिवेशन", "मोहीम", "अभियान", "समिती", "नियुक्ती", "शहर", "राज्य"],
-        "आंतरराष्ट्रीय घडामोडी व करार": ["आंतरराष्ट्रीय", "संयुक्त राष्ट्र", "जी-२०", "g20", "ब्रिक्स", "brics", "अमेरिका", "रशिया", "चीन", "युरोप", "करार", "शिखर परिषद", "जागतिक"],
-        "महाराष्ट्र शासन व योजना": ["महाराष्ट्र", "मुंबई", "पुणे", "नाशिक", "नागपूर", "मंत्रिमंडळ", "मुख्यमंत्री", "राज्यपाल", "योजना", "निधी", "प्रकल्प", "धरण"],
-        "अर्थव्यवस्था, अर्थसंकल्प व निर्देशांक": ["अर्थसंकल्प", "निर्देशांक", "अहवाल", "महागाई", "बँक", "gdp", "जीडीपी", "निर्यात", "आयात", "गुंतवणूक", "शेअर"],
-        "पुरस्कार व क्रीडा": ["पुरस्कार", "नोबेल", "भारतरत्न", "ऑलिम्पिक", "क्रिकेट", "विश्वचषक", "पदक", "खेळाडू", "क्रीडा", "चषक"],
-        "विज्ञान, तंत्रज्ञान व पर्यावरण": ["इस्रो", "isro", "उपग्रह", "अंतराळ", "संशोधन", "पर्यावरण", "हवामान", "जैवविविधता", "अभयारण्य", "प्रदूषण", "ऊर्जा"]
+        "राष्ट्रीय घडामोडी": ["राष्ट्रीय मोहीम", "राष्ट्रीय अभियान", "केंद्रीय मंत्रिमंडळ", "संसद अधिवेशन", "नवीन राष्ट्रीय", "ऑपरेशन", "मिशन", "भारतातील पहिले", "नियुक्ती"],
+        "आंतरराष्ट्रीय घडामोडी व करार": ["आंतरराष्ट्रीय करार", "संयुक्त राष्ट्र", "जी-२०", "जी २०", "g20", "ब्रिक्स", "brics", "शिखर परिषद", "जागतिक परिषद", "द्विपक्षीय करार", "युनो", "un", "नाटो", "nato", "आसियान", "asean"],
+        "महाराष्ट्र शासन व योजना": ["महाराष्ट्र शासन", "राज्य शासन", "मुख्यमंत्री योजना", "लाडकी बहीण", "महाराष्ट्र मंत्रिमंडळ", "राज्य सरकारची योजना", "महाराष्ट्र धोरण"],
+        "अर्थव्यवस्था, अर्थसंकल्प व निर्देशांक": ["निर्देशांक", "ग्लोबल इंडेक्स", "जागतिक निर्देशांक", "आर्थिक पाहणी", "विकास निर्देशांक", "index", "ranking"],
+        "पुरस्कार व क्रीडा": ["पुरस्कार", "नोबेल", "भारतरत्न", "ऑलिम्पिक", "क्रिकेट", "विश्वचषक", "पदक", "खेळाडू", "क्रीडा", "चषक", "अवॉर्ड", "medal", "olympic", "world cup", "award"],
+        "विज्ञान, तंत्रज्ञान व पर्यावरण": ["इस्रो", "isro", "चांद्रयान", "आदित्य एल", "उपग्रह प्रक्षेपण", "एआय", "ai", "क्वांटम", "पर्यावरण दिन", "हवामान परिषद", "cop"]
       }
     };
 
@@ -722,7 +728,7 @@
       { id: "Q-1001", q_type: "pyq", year: 2024, subject: "राज्यघटना व प्रशासन", topic: "पंचायत राज व स्थानिक स्वराज्य", exam_stage: "both", question_mr: "महाराष्ट्रात जिल्हा परिषदांची स्थापना केव्हा झाली?", options: ["१ मे १९६०", "१ मे १९६२", "१५ ऑगस्ट १९६१", "२६ जानेवारी १९६३"], answer: 1, explanation_mr: "महाराष्ट्रात १ मे १९६२ रोजी जिल्हा परिषदा व पंचायत समित्यांची स्थापना झाली." },
       { id: "Q-1002", q_type: "pyq", year: 2023, subject: "भूगोल", topic: "महाराष्ट्राचा भूगोल", exam_stage: "pre", question_mr: "गोदावरी नदीचे उगमस्थान खालीलपैकी कोणत्या ठिकाणी आहे?", options: ["महाबळेश्वर", "त्र्यंबकेश्वर", "भोर", "भीमाशंकर"], answer: 1, explanation_mr: "गोदावरी नदीचा उगम नाशिक जिल्ह्यातील त्र्यंबकेश्वर येथे होतो." },
       { id: "Q-1003", q_type: "pyq", year: 2024, subject: "इतिहास", topic: "महाराष्ट्रातील समाजसुधारक", exam_stage: "both", question_mr: "'सत्यशोधक समाज' कोणी स्थापन केला?", options: ["महात्मा ज्योतिराव फुले", "राजर्षी शाहू महाराज", "डॉ. बाबासाहेब आंबेडकर", "गोपाळ गणेश आगरकर"], answer: 0, explanation_mr: "महात्मा ज्योतिराव फुले यांनी २४ सप्टेंबर १८७३ रोजी सत्यशोधक समाजाची स्थापना केली." },
-      { id: "Q-1004", q_type: "new", year: 2026, subject: "चालू घडामोडी", topic: "महाराष्ट्र शासन व योजना", exam_stage: "pre", question_mr: "MPSC गट-क सराव २०२६-२७ साठी विषयनिहाय व घटकनिहाय सरावाचा मुख्य फायदा कोणता?", options: ["कमकुवत घटकांवर अचूक लक्ष", "फक्त अंदाज लावणे", "अभ्यासक्रम वगळणे", "वेळ वाया घालवणे"], answer: 0, explanation_mr: "घटकनिहाय विश्लेषणामुळे विद्यार्थ्यांना कमकुवत घटकांवर सुधारणा करता येते." },
+      { id: "Q-1004", q_type: "new", year: 2026, subject: "चालू घडामोडी", topic: "महाराष्ट्र शासन व योजना", exam_stage: "pre", question_mr: "महाराष्ट्र शासन व राज्य सरकारच्या विविध योजनांचा सराव परीक्षेसाठी कसा उपयुक्त ठरतो?", options: ["योजना व धोरणांवर अचूक लक्ष", "फक्त अंदाज लावणे", "अभ्यासक्रम वगळणे", "वेळ वाया घालवणे"], answer: 0, explanation_mr: "महाराष्ट्र शासनाच्या योजना व धोरणांवर आधारित सराव उपयुक्त ठरतो." },
       { id: "Q-1005", q_type: "pyq", year: 2022, subject: "अर्थव्यवस्था", topic: "भारतीय व महाराष्ट्र अर्थव्यवस्था", exam_stage: "both", question_mr: "भारतात चलनविषयक धोरण (Monetary Policy) प्रामुख्याने कोणाकडून राबवले जाते?", options: ["भारतीय रिझर्व्ह बँक (RBI)", "SEBI", "NABARD", "वित्त आयोग"], answer: 0, explanation_mr: "भारतातील चलनविषयक धोरण भारतीय रिझर्व्ह बँक (RBI) राबवते." },
       { id: "Q-1006", q_type: "pyq", year: 2023, subject: "सामान्य विज्ञान", topic: "जीवशास्त्र व आरोग्य", exam_stage: "pre", question_mr: "रक्तातील हिमोग्लोबिन तयार होण्यासाठी कोणते खनिज आवश्यक असते?", options: ["लोह (Iron)", "कॅल्शियम", "आयोडीन", "सोडियम"], answer: 0, explanation_mr: "हिमोग्लोबिनच्या निर्मितीसाठी लोह (Iron) हे महत्त्वाचे खनिज आहे." },
       { id: "Q-1007", q_type: "new", year: 2026, subject: "अंकगणित व बुद्धिमत्ता", topic: "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)", exam_stage: "pre", question_mr: "एका वस्तूची खरेदी किंमत ₹८०० असून ती ₹१,००० ला विकल्यास शेकडा नफा किती?", options: ["२०%", "२५%", "१५%", "३०%"], answer: 1, explanation_mr: "नफा = २००; शेकडा नफा = (२०० / ८००) × १०० = २५%." },
@@ -740,14 +746,15 @@
       "MPSC-199-DEMO1": {
         code: "MPSC-199-DEMO1",
         student_id: "STU101",
+        mobile: "",
         plan: "199_YEARLY",
         device_id: null,
         active: true,
-        created_at: "2026-11-24"
+        created_at: "2026-11-25"
       }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v15";
+    const STATE_KEY = "mpsc_sarav_2026_state_v19";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -777,6 +784,8 @@
         supabaseKey: DEFAULT_SUPABASE_KEY,
         questions: SAMPLE_QUESTIONS,
         pdfs: DEFAULT_PDFS,
+        githubPdfs: [],
+        githubPdfFilter: "ALL",
         passcodes: DEFAULT_PASSCODES,
         mistakes: [],
         bookmarks: [],
@@ -797,7 +806,8 @@
           ...parsed,
           questions: SAMPLE_QUESTIONS,
           pdfs: Array.isArray(parsed.pdfs) && parsed.pdfs.length ? parsed.pdfs : DEFAULT_PDFS,
-          passcodes: parsed.passcodes && Object.keys(parsed.passcodes).length ? parsed.passcodes : DEFAULT_PASSCODES
+          githubPdfs: Array.isArray(parsed.githubPdfs) ? parsed.githubPdfs : [],
+          passcodes: parsed.passcodes && Object.keys(parsed.passcodes).length ? { ...DEFAULT_PASSCODES, ...parsed.passcodes } : DEFAULT_PASSCODES
         };
       } catch (e) {
         return fallback;
@@ -807,6 +817,7 @@
     let appState = loadState();
     let activeExam = null;
     let examTimerInterval = null;
+    let githubPdfFetchInProgress = false;
 
     function saveState() {
       try {
@@ -820,7 +831,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
+      window._toastTimer = setTimeout(() => el.classList.remove("show"), 3800);
     }
 
     function copyText(txt, toastMsg) {
@@ -828,6 +839,39 @@
         navigator.clipboard.writeText(txt).catch(() => {});
       }
       showToast(toastMsg || "कॉपी केले!");
+    }
+
+    function formatIndianPhoneForWa(rawPhone) {
+      const digits = (rawPhone || "").replace(/\D/g, "");
+      if (!digits) return "";
+      if (digits.length === 10) return "91" + digits;
+      return digits;
+    }
+
+    function buildPasscodeShareMessage(rec) {
+      return `नमस्कार ${rec.student_id}, MPSC Sarav 2026-27 (Pro ₹199/वर्ष) साठी तुमचा Passcode तयार झाला आहे.\nStudent ID: ${rec.student_id}\nPasscode: ${rec.code}\n(हा Passcode फक्त एकाच डिव्हाइसवर लॉक होईल)\nपोर्टल लिंक: ${PORTAL_PUBLIC_URL}`;
+    }
+
+    function sendPasscodeWhatsApp(code, customMobile = "") {
+      const rec = appState.passcodes[code];
+      if (!rec) return;
+      const msg = buildPasscodeShareMessage(rec);
+      const targetPhone = formatIndianPhoneForWa(customMobile || rec.mobile || "");
+      const url = targetPhone
+        ? `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank", "noopener");
+    }
+
+    function sendPasscodeSms(code, customMobile = "") {
+      const rec = appState.passcodes[code];
+      if (!rec) return;
+      const msg = buildPasscodeShareMessage(rec);
+      const cleanPhone = (customMobile || rec.mobile || "").replace(/[^\d+]/g, "");
+      const url = cleanPhone
+        ? `sms:${cleanPhone}?body=${encodeURIComponent(msg)}`
+        : `sms:?body=${encodeURIComponent(msg)}`;
+      window.location.href = url;
     }
 
     function openWhatsAppUrl(text) {
@@ -856,83 +900,103 @@
       openModal("proModal");
     }
 
-    function classifySubjectAndTopic(q, fallbackIndex = 0) {
-      let subj = (q.subject || "").trim();
-      let topic = (q.topic || "").trim();
-      const qLower = `${q.question_mr || ""} ${(q.options || []).join(" ")}`.toLowerCase();
+    async function fetchGithubRepositoryPdfs(forceRefresh = false) {
+      if (githubPdfFetchInProgress) return;
+      if (!forceRefresh && Array.isArray(appState.githubPdfs) && appState.githubPdfs.length > 0) return;
 
-      if (VALID_SUBJECT_SET.has(subj)) {
-        const topicMap = TOPIC_KEYWORDS[subj] || {};
-        const topicNames = Object.keys(topicMap);
-        if (topic && topicMap[topic]) {
-          return { subject: subj, topic };
+      githubPdfFetchInProgress = true;
+      try {
+        const apiUrl = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents?ref=${GITHUB_REPO_BRANCH}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const items = await res.json();
+        if (!Array.isArray(items)) return;
+
+        const pdfs = [];
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (!item || item.type !== "file" || !/\.pdf$/i.test(item.name || "")) continue;
+          const rawName = item.name;
+          const cleanTitle = rawName.replace(/\.pdf$/i, "").replace(/\s+/g, " ").trim();
+          const lowerName = cleanTitle.toLowerCase();
+          const isAnswerKey = lowerName.startsWith("answer") || cleanTitle.startsWith("उत्तर");
+          const yearMatch = cleanTitle.match(/\b(201\d|202\d)\b/) || cleanTitle.match(/(२०१\d|२०२\d)/);
+          const viewUrl = item.html_url || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/blob/${GITHUB_REPO_BRANCH}/${encodeURIComponent(rawName)}`;
+
+          pdfs.push({
+            id: "GH-PDF-" + i,
+            title: cleanTitle,
+            kind: isAnswerKey ? "answer" : "question",
+            year: yearMatch ? yearMatch[0] : "PYQ",
+            file_url: viewUrl
+          });
         }
-        let bestTopic = null;
-        let bestTScore = 0;
-        for (const [tName, kws] of Object.entries(topicMap)) {
-          let tScore = 0;
-          for (const kw of kws) {
-            if (qLower.includes(kw.toLowerCase())) tScore++;
-          }
-          if (tScore > bestTScore) {
-            bestTScore = tScore;
-            bestTopic = tName;
-          }
-        }
-        return {
-          subject: subj,
-          topic: bestTopic || topicNames[fallbackIndex % (topicNames.length || 1)] || "सर्वसाधारण घटक"
-        };
+
+        pdfs.sort((a, b) => a.title.localeCompare(b.title, "mr"));
+        appState.githubPdfs = pdfs;
+        saveState();
+        if (appState.activeTab === "pdfs") renderAll();
+        if (forceRefresh) showToast(`GitHub वरून ${pdfs.length} PDFs (प्रश्नपत्रिका व Answer Keys) लोड झाल्या.`);
+      } catch (err) {
+        if (forceRefresh) showToast("GitHub PDFs लोड करताना अडचण: " + err.message);
+      } finally {
+        githubPdfFetchInProgress = false;
       }
+    }
 
-      let bestSubj = null;
+    // Strict keyword-based segregator: never assigns mismatched topics when keywords don't match
+    function classifySubjectAndTopic(q, fallbackIndex = 0) {
+      const rawSubj = (q.subject || "").trim();
+      const rawTopic = (q.topic || "").trim();
+      const qText = `${q.question_mr || ""} ${(q.options || []).join(" ")}`;
+      const qLower = qText.toLowerCase();
+
+      let matchedSubj = null;
+      let matchedTopic = null;
       let bestScore = 0;
-      let bestTopic = null;
 
       for (const sKey of SUBJECT_PRIORITY_ORDER) {
         const tMap = TOPIC_KEYWORDS[sKey] || {};
-        let subjScore = 0;
-        let topT = null;
-        let topTScore = 0;
-
         for (const [tName, kws] of Object.entries(tMap)) {
-          let tScore = 0;
+          let score = 0;
           for (const kw of kws) {
-            if (qLower.includes(kw.toLowerCase())) tScore++;
+            if (!kw) continue;
+            const kwClean = kw.toLowerCase().trim();
+            if (!kwClean) continue;
+            // Word-boundary check for short ASCII tokens like 'un', 'ai', '368'
+            if (/^[a-z0-9]+$/i.test(kwClean) && kwClean.length <= 4) {
+              const re = new RegExp(`\\b${kwClean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+              if (re.test(qLower)) score += 3;
+            } else if (qLower.includes(kwClean)) {
+              score += kwClean.length >= 6 ? 2 : 1;
+            }
           }
-          subjScore += tScore;
-          if (tScore > topTScore) {
-            topTScore = tScore;
-            topT = tName;
+          if (score > bestScore) {
+            bestScore = score;
+            matchedSubj = sKey;
+            matchedTopic = tName;
           }
-        }
-
-        if (subjScore > bestScore) {
-          bestScore = subjScore;
-          bestSubj = sKey;
-          bestTopic = topT;
         }
       }
 
-      if (!bestSubj || bestScore === 0) {
-        const roundRobinSubj = MPSC_SUBJECTS[fallbackIndex % MPSC_SUBJECTS.length].key;
-        const tNames = Object.keys(TOPIC_KEYWORDS[roundRobinSubj] || {});
-        return {
-          subject: roundRobinSubj,
-          topic: tNames[fallbackIndex % (tNames.length || 1)] || "सर्वसाधारण घटक"
-        };
+      if (matchedSubj && matchedTopic && bestScore >= 1) {
+        return { subject: matchedSubj, topic: matchedTopic };
       }
 
-      const tNames = Object.keys(TOPIC_KEYWORDS[bestSubj] || {});
-      return {
-        subject: bestSubj,
-        topic: bestTopic || tNames[fallbackIndex % (tNames.length || 1)] || "सर्वसाधारण घटक"
-      };
+      if (VALID_SUBJECT_SET.has(rawSubj)) {
+        const tMap = TOPIC_KEYWORDS[rawSubj] || {};
+        if (rawTopic && Object.prototype.hasOwnProperty.call(tMap, rawTopic)) {
+          return { subject: rawSubj, topic: rawTopic };
+        }
+        return { subject: rawSubj, topic: "इतर / सर्वसाधारण" };
+      }
+
+      return { subject: "इतर / सर्वसाधारण", topic: "इतर / सर्वसाधारण" };
     }
 
     async function reclassifyExistingQuestions() {
       if (!appState.questions.length) return;
-      showToast("सर्व प्रश्नांची विषय व घटकानुसार विभागणी होत आहे...");
+      showToast("सर्व प्रश्नांची कडक विषय व घटकानुसार विभागणी होत आहे...");
       const updated = [];
       for (let i = 0; i < appState.questions.length; i++) {
         const q = appState.questions[i];
@@ -948,7 +1012,7 @@
       renderAll();
       await saveQuestionsChunked(appState.questions);
       saveState();
-      showToast(`पूर्ण! ${appState.questions.length} प्रश्नांची विषय व घटकानुसार विभागणी झाली.`);
+      showToast(`पूर्ण! ${appState.questions.length} प्रश्नांची कडक विभागणी झाली.`);
     }
 
     function normalizeQuestion(raw, idx = 0, forcedType = null) {
@@ -988,6 +1052,50 @@
       };
     }
 
+    async function pullPasscodesFromCloud() {
+      if (!appState.supabaseUrl || !appState.supabaseKey) return;
+      try {
+        const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_coupons?select=code,discount_label,active&limit=1000`, {
+          headers: {
+            apikey: appState.supabaseKey,
+            Authorization: `Bearer ${appState.supabaseKey}`
+          }
+        });
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows)) return;
+        let changed = false;
+        rows.forEach(r => {
+          const code = String(r.code || "").trim().toUpperCase();
+          if (!code) return;
+          const parts = String(r.discount_label || "").split("|");
+          const sid = (parts[1] || "STU101").trim().toUpperCase();
+          const dev = (parts[2] || "").trim() || null;
+          const mob = (parts[3] || "").trim();
+          const existing = appState.passcodes[code];
+          if (!existing) {
+            appState.passcodes[code] = {
+              code,
+              student_id: sid,
+              mobile: mob,
+              plan: "199_YEARLY",
+              device_id: dev,
+              active: r.active !== false,
+              created_at: new Date().toISOString().slice(0, 10)
+            };
+            changed = true;
+          } else {
+            existing.student_id = sid || existing.student_id;
+            existing.active = r.active !== false;
+            if (dev) existing.device_id = dev;
+            if (mob) existing.mobile = mob;
+            changed = true;
+          }
+        });
+        if (changed) saveState();
+      } catch (e) {}
+    }
+
     function verifyPasscodeBinding(studentIdRaw, codeRaw) {
       const studentId = (studentIdRaw || "").trim().toUpperCase();
       const code = (codeRaw || "").trim().toUpperCase();
@@ -998,7 +1106,7 @@
 
       const record = appState.passcodes[code];
       if (!record || record.active === false) {
-        return { ok: false, msg: "हा Passcode अस्तित्वात नाही किंवा बंद केला आहे." };
+        return { ok: false, msg: "हा Passcode अस्तित्वात नाही किंवा बंद (Revoked) केला आहे." };
       }
 
       if (record.student_id.toUpperCase() !== studentId) {
@@ -1006,7 +1114,7 @@
       }
 
       if (record.device_id && record.device_id !== CURRENT_DEVICE_ID) {
-        return { ok: false, msg: `हा Passcode आधीच दुसऱ्या डिव्हाइसवर (${record.device_id}) लॉक आहे. WhatsApp वर Admin ला संपर्क करा.` };
+        return { ok: false, msg: `हा Passcode आधीच दुसऱ्या डिव्हाइसवर (${record.device_id}) लॉक आहे. दुसऱ्या डिव्हाइसवर चालणार नाही.` };
       }
 
       if (!record.device_id) {
@@ -1018,7 +1126,7 @@
       appState.isProUnlocked = true;
       saveState();
       syncCloudPasscode(record);
-      return { ok: true, msg: `Pro ₹199 प्लॅन सक्रिय! (${studentId} • ${CURRENT_DEVICE_ID})` };
+      return { ok: true, msg: `Pro ₹199 प्लॅन सक्रिय! (${studentId} • ${CURRENT_DEVICE_ID} वर लॉक)` };
     }
 
     function activateStudentPasscode() {
@@ -1095,8 +1203,8 @@
           },
           body: JSON.stringify({
             code: record.code,
-            discount_label: `199_YEARLY|${record.student_id}|${record.device_id || ""}`,
-            active: record.active
+            discount_label: `199_YEARLY|${record.student_id}|${record.device_id || ""}|${record.mobile || ""}`,
+            active: record.active !== false
           })
         });
       } catch (e) {}
@@ -1145,38 +1253,56 @@
       checkCloudConnection();
     }
 
-    async function pullQuestionsFromCloud() {
+    async function pullQuestionsFromCloud(silent = false) {
       if (!appState.supabaseUrl || !appState.supabaseKey) {
-        showToast("Supabase URL/Key सेट नाही.");
-        return;
+        if (!silent) showToast("Supabase URL/Key सेट नाही.");
+        return false;
       }
       try {
-        showToast("क्लाउडवरून प्रश्न लोड होत आहेत (मर्यादा: 25,000)...");
+        if (!silent) showToast("क्लाउडवरून सर्व प्रश्न (13,390+) लोड होत आहेत...");
         const cols = "id,q_type,year,subject,topic,exam_stage,question_mr,options,answer,explanation_mr";
-        const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_questions?select=${cols}&limit=25000`, {
-          headers: {
-            apikey: appState.supabaseKey,
-            Authorization: `Bearer ${appState.supabaseKey}`,
-            Range: "0-24999"
+        const pageSize = 1000;
+        const allRows = [];
+
+        for (let offset = 0; offset < 30000; offset += pageSize) {
+          const endIdx = offset + pageSize - 1;
+          const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_questions?select=${cols}&limit=${pageSize}&offset=${offset}`, {
+            headers: {
+              apikey: appState.supabaseKey,
+              Authorization: `Bearer ${appState.supabaseKey}`,
+              Range: `${offset}-${endIdx}`
+            }
+          });
+          if (!res.ok) {
+            if (!silent && allRows.length === 0) showToast(`क्लाउडवरून प्रश्न घेताना त्रुटी (${res.status}).`);
+            break;
           }
-        });
-        if (!res.ok) {
-          showToast(`क्लाउडवरून प्रश्न घेताना त्रुटी (${res.status}).`);
-          return;
+          const rows = await res.json();
+          if (!Array.isArray(rows) || rows.length === 0) break;
+          for (let i = 0; i < rows.length; i++) allRows.push(rows[i]);
+          if (rows.length < pageSize) break;
+          await yieldFrame();
         }
-        const rows = await res.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          appState.questions = rows.map((r, i) => normalizeQuestion(r, i));
+
+        if (allRows.length > 0) {
+          appState.questions = allRows.map((r, i) => normalizeQuestion(r, i));
           renderAll();
           await saveQuestionsChunked(appState.questions);
           saveState();
-          showToast(`क्लाउडवरून ${appState.questions.length} प्रश्न सेव्ह झाले.`);
+          if (!silent) showToast(`क्लाउडवरून ${appState.questions.length} प्रश्न सेव्ह झाले.`);
+          return true;
         } else {
-          showToast("क्लाउडवर अजून प्रश्न नाहीत.");
+          if (!silent) showToast("क्लाउडवर अजून प्रश्न नाहीत.");
+          return false;
         }
       } catch (e) {
-        showToast("त्रुटी: " + (e?.message || "क्लाउडवरून डेटा घेताना अडचण आली."));
+        if (!silent) showToast("त्रुटी: " + (e?.message || "क्लाउडवरून डेटा घेताना अडचण आली."));
+        return false;
       }
+    }
+
+    async function silentPullFromCloud() {
+      return await pullQuestionsFromCloud(true);
     }
 
     async function loadJsonFromGithubUrl(url, forcedType) {
@@ -1229,6 +1355,7 @@
 
     function getFilteredPool(stageFilter = "ALL") {
       return appState.questions.filter(q => {
+        if (q.subject === "इतर / सर्वसाधारण") return false;
         if (appState.yearFilter !== "ALL" && String(q.year) !== String(appState.yearFilter)) return false;
         if (appState.qTypeFilter !== "ALL" && q.q_type !== appState.qTypeFilter) return false;
         if (stageFilter === "pre") return q.exam_stage === "pre" || q.exam_stage === "both";
@@ -1266,14 +1393,13 @@
         }
       }
 
-      if (picked.length < count) {
-        const extra = pickQuestionsWithRepeats(pool, count - picked.length);
-        for (let m = 0; m < extra.length; m++) {
-          picked.push({ ...extra[m], _uid: `${extra[m].id}_rep_${picked.length}` });
-        }
-      }
-
       return picked.slice(0, count).sort(() => Math.random() - 0.5);
+    }
+
+    function pickStrictTopicQuestions(subj, topicName, maxCount = 20) {
+      const matched = appState.questions.filter(q => q.subject === subj && q.topic === topicName);
+      const shuffled = [...matched].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, maxCount).map((q, i) => ({ ...q, _uid: `${q.id}_strict_${i}` }));
     }
 
     function pickQuestionsWithRepeats(pool, count) {
@@ -1316,10 +1442,20 @@
         const [encSubj, encTopic] = extraData.split("||");
         const subj = decodeURIComponent(encSubj);
         const tName = decodeURIComponent(encTopic);
-        const subjQs = appState.questions.filter(q => q.subject === subj);
-        const tPool = subjQs.filter(q => q.topic === tName);
-        const fallbackPool = tPool.length ? tPool : (subjQs.length ? subjQs : appState.questions);
-        startExamSession({ title: `${subj} — ${tName} (20 प्रश्न)`, modeKey: "topic20", customQuestions: pickQuestionsWithRepeats(fallbackPool, 20), count: 20, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
+        const strictList = pickStrictTopicQuestions(subj, tName, 20);
+        if (!strictList.length) {
+          showToast(`'${subj} — ${tName}' या घटकाचे प्रश्न अद्याप उपलब्ध नाहीत.`);
+          return;
+        }
+        startExamSession({
+          title: `${subj} — ${tName} (${strictList.length} प्रश्न)`,
+          modeKey: "topic20",
+          customQuestions: strictList,
+          count: strictList.length,
+          marksPerQ: 1,
+          negPerQ: 0.25,
+          minutes: 20
+        });
       } else if (presetKey === "mistakes") {
         const mistakeQs = appState.questions.filter(q => appState.mistakes.includes(q.id)).map((q, i) => ({ ...q, _uid: q.id + "_" + i }));
         startExamSession({ title: "चुकलेले प्रश्न रिव्हिजन", modeKey: "mistakes", customQuestions: mistakeQs, count: mistakeQs.length, marksPerQ: 1, negPerQ: 0, minutes: 25 });
@@ -1489,12 +1625,14 @@
 
     function createSingleDevicePasscode() {
       const sid = (document.getElementById("newPassStudentId").value || "").trim().toUpperCase();
+      const mob = (document.getElementById("newPassMobile")?.value || "").trim();
       let code = (document.getElementById("newPassCode").value || "").trim().toUpperCase();
       if (!sid) { showToast("कृपया Student ID टाका (उदा. STU102)."); return; }
       if (!code) code = "MPSC-199-" + Math.random().toString(36).substring(2, 7).toUpperCase();
       appState.passcodes[code] = {
         code,
         student_id: sid,
+        mobile: mob,
         plan: "199_YEARLY",
         device_id: null,
         active: true,
@@ -1503,6 +1641,7 @@
       saveState();
       syncCloudPasscode(appState.passcodes[code]);
       document.getElementById("newPassStudentId").value = "";
+      if (document.getElementById("newPassMobile")) document.getElementById("newPassMobile").value = "";
       document.getElementById("newPassCode").value = "";
       showToast(`Passcode ${code} तयार (${sid} • 1 Device Lock).`);
       renderAll();
@@ -1583,6 +1722,7 @@
       appState.activeTab = tab;
       saveState();
       renderAll();
+      if (tab === "pdfs") fetchGithubRepositoryPdfs(false);
     }
 
     function renderTopAndProfile() {
@@ -1730,7 +1870,7 @@
               <span class="badge badge-blue">MPSC गट-क (Group C) • 2026-27</span>
               <h1 class="card-title" style="font-size:22px;margin-top:6px;">१-१ डेमो पेपर्स (पॅटर्ननुसार), पूर्व १०० गुण, मुख्य परीक्षा व घटकनिहाय २० प्रश्न</h1>
               <p class="card-sub" style="margin-bottom:0;">
-                Pro प्लॅन <strong>₹199/वर्ष</strong> (१ पासकोड = १ Student ID + १ Device) • पेमेंट किंवा कोणत्याही Query/Inquiry साठी थेट <strong>WhatsApp 8554011484</strong> वर संपर्क.
+                Pro प्लॅन <strong>₹199/वर्ष</strong> (१ पासकोड = १ Student ID + १ Device Lock) • पेमेंट किंवा कोणत्याही Query/Inquiry साठी थेट <strong>WhatsApp 8554011484</strong> वर संपर्क.
               </p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1743,7 +1883,7 @@
         <div class="grid-4">
           <div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक (Permanent)</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div>
-          <div class="stat-box"><div class="stat-num" style="color:var(--amber);">9 विषय / 28 घटक</div><div class="stat-lbl">विषय व घटक संरचना</div></div>
+          <div class="stat-box"><div class="stat-num" style="color:var(--amber);">9 विषय / Strict Topic</div><div class="stat-lbl">कडक विषय व घटक विभागणी</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div>
         </div>
 
@@ -1876,8 +2016,13 @@
 
       return `
         <div class="card">
-          <h2 class="card-title">🎯 विषयनिहाय व घटकनिहाय 20 प्रश्नांची चाचणी</h2>
-          <p class="card-sub">प्रथम विषय निवडा, नंतर त्यातील कोणताही घटक (Topic) निवडून प्रत्येकी <strong>20 प्रश्नांची</strong> सराव चाचणी द्या.</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+            <div>
+              <h2 class="card-title" style="margin:0;">🎯 विषयनिहाय व घटकनिहाय 20 प्रश्नांची चाचणी (Strict Topic Segregated)</h2>
+              <p class="card-sub" style="margin-bottom:0;">प्रत्येक घटकात फक्त <strong>त्याच घटकाचे अचूक प्रश्न</strong> येतील; दुसऱ्या विषयाचे प्रश्न मिसळले जाणार नाहीत.</p>
+            </div>
+            ${appState.isAdminAuthenticated ? `<button class="btn btn-sm btn-accent" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा अचूक वर्गवारी करा</button>` : ""}
+          </div>
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
             ${MPSC_SUBJECTS.map(s => `
@@ -1888,18 +2033,22 @@
           </div>
 
           <div class="grid-3">
-            ${topicNames.map(tName => `
-              <div class="topic-card">
-                <div>
-                  <span class="badge badge-blue">${selectedSubj}</span>
-                  <h3 style="margin:6px 0 4px;font-size:15px;">${tName}</h3>
-                  <div style="font-size:12px;color:var(--muted);">ओळखलेले प्रश्न: ${topicCounts[tName] || 0} • चाचणी: 20 प्रश्न</div>
+            ${topicNames.map(tName => {
+              const cnt = topicCounts[tName] || 0;
+              const testSize = Math.min(20, cnt);
+              return `
+                <div class="topic-card">
+                  <div>
+                    <span class="badge badge-blue">${selectedSubj}</span>
+                    <h3 style="margin:6px 0 4px;font-size:15px;">${tName}</h3>
+                    <div style="font-size:12px;color:var(--muted);">अचूक प्रश्न उपलब्ध: <strong>${cnt}</strong> • चाचणी प्रश्न: ${testSize}</div>
+                  </div>
+                  <button class="btn btn-primary btn-sm" ${cnt === 0 ? "disabled" : ""} onclick="startExamByKey('topic20', '${encodeURIComponent(selectedSubj)}||' + '${encodeURIComponent(tName)}')">
+                    ${cnt > 0 ? `${testSize} प्रश्नांची टेस्ट सुरू करा` : "या घटकाचे प्रश्न उपलब्ध नाहीत"}
+                  </button>
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="startExamByKey('topic20', '${encodeURIComponent(selectedSubj)}||' + '${encodeURIComponent(tName)}')">
-                  20 प्रश्नांची टेस्ट सुरू करा
-                </button>
-              </div>
-            `).join("")}
+              `;
+            }).join("")}
           </div>
         </div>
       `;
@@ -1947,9 +2096,18 @@
     }
 
     function renderPdfsTab() {
+      const ghAll = Array.isArray(appState.githubPdfs) ? appState.githubPdfs : [];
+      const ghFiltered = ghAll.filter(item => {
+        if (appState.githubPdfFilter === "question") return item.kind === "question";
+        if (appState.githubPdfFilter === "answer") return item.kind === "answer";
+        return true;
+      });
+      const qCount = ghAll.filter(i => i.kind === "question").length;
+      const aCount = ghAll.filter(i => i.kind === "answer").length;
+
       return `
         <div class="card">
-          <h2 class="card-title">📄 PYQ व सराव पेपर PDFs</h2>
+          <h2 class="card-title">📄 PYQ प्रश्नपत्रिका व Answer Key PDFs</h2>
           <p class="card-sub">Free पेपर्स सर्वांसाठी खुले आहेत; Pro PDFs साठी ₹199/वर्ष Passcode आवश्यक आहे.</p>
           <div class="grid-2">
             ${appState.pdfs.map(pdf => {
@@ -1969,6 +2127,36 @@
               `;
             }).join("")}
           </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div>
+              <span class="badge badge-teal">GitHub Auto-Sync (${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME})</span>
+              <h3 class="card-title" style="margin-top:4px;">📚 GitHub वरील सर्व प्रश्नपत्रिका (${qCount}) व Answer Keys (${aCount})</h3>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-sm ${appState.githubPdfFilter==='ALL'?'btn-primary':''}" onclick="appState.githubPdfFilter='ALL';saveState();renderAll();">सर्व (${ghAll.length})</button>
+              <button class="btn btn-sm ${appState.githubPdfFilter==='question'?'btn-primary':''}" onclick="appState.githubPdfFilter='question';saveState();renderAll();">प्रश्नपत्रिका (${qCount})</button>
+              <button class="btn btn-sm ${appState.githubPdfFilter==='answer'?'btn-primary':''}" onclick="appState.githubPdfFilter='answer';saveState();renderAll();">Answer Keys (${aCount})</button>
+              <button class="btn btn-sm btn-accent" onclick="fetchGithubRepositoryPdfs(true)">🔄 यादी रिफ्रेश करा</button>
+            </div>
+          </div>
+
+          ${ghFiltered.length ? `
+            <div class="grid-2">
+              ${ghFiltered.map(pdf => `
+                <div class="topic-card">
+                  <div>
+                    <span class="badge ${pdf.kind === "answer" ? "badge-green" : "badge-blue"}">${pdf.kind === "answer" ? "✅ ANSWER KEY" : "📝 QUESTION PAPER"}</span>
+                    <span class="badge badge-amber">${pdf.year}</span>
+                    <h4 style="margin:6px 0 4px;font-size:14px;">${pdf.title}</h4>
+                  </div>
+                  <a class="btn btn-primary btn-sm" href="${pdf.file_url}" target="_blank" rel="noopener">📥 ${pdf.kind === "answer" ? "Answer Key उघडा" : "प्रश्नपत्रिका उघडा"}</a>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<p style="font-size:13px;color:var(--muted);">GitHub रिपॉझिटरीमधील PDFs लोड होत आहेत किंवा <strong>🔄 यादी रिफ्रेश करा</strong> दाबा.</p>`}
         </div>
       `;
     }
@@ -2026,27 +2214,31 @@
           ${aTab === "passcodes" ? `
             <div class="stat-box" style="margin-bottom:14px;">
               <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3>
-              <div class="grid-3">
+              <div class="grid-4" style="margin-bottom:8px;">
                 <input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. STU102)" />
+                <input id="newPassMobile" name="newPassMobile" class="input" placeholder="विद्यार्थी मोबाइल (पर्यायी)" />
                 <input id="newPassCode" name="newPassCode" class="input" placeholder="Passcode (रिकामे सोडल्यास ऑटो तयार होईल)" />
                 <button class="btn btn-primary" onclick="createSingleDevicePasscode()">+ Passcode तयार करा</button>
               </div>
-              <div style="margin-top:8px;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-sm" onclick="exportPasscodesJson()">💾 Passcodes JSON डाउनलोड करा</button>
+                <button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes Sync करा</button>
               </div>
             </div>
 
             <table>
-              <thead><tr><th>Passcode</th><th>Student ID</th><th>Plan</th><th>Locked Device ID</th><th>स्थिती</th><th>क्रिया</th></tr></thead>
+              <thead><tr><th>Passcode</th><th>Student ID</th><th>मोबाइल</th><th>Locked Device ID</th><th>स्थिती</th><th>पाठवा व क्रिया</th></tr></thead>
               <tbody>
                 ${passList.map(p => `
                   <tr>
                     <td><strong>${p.code}</strong></td>
                     <td>${p.student_id}</td>
-                    <td>₹199/yr</td>
+                    <td>${p.mobile || "-"}</td>
                     <td><code>${p.device_id || "अद्याप लॉक नाही"}</code></td>
                     <td><span class="badge ${p.active ? "badge-green" : "badge-rose"}">${p.active ? "ACTIVE" : "REVOKED"}</span></td>
                     <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <button class="btn btn-wa btn-sm" onclick="sendPasscodeWhatsApp('${p.code}')">💬 WhatsApp</button>
+                      <button class="btn btn-accent btn-sm" onclick="sendPasscodeSms('${p.code}')">✉️ Text SMS</button>
                       <button class="btn btn-sm" onclick="copyText('Student ID: ${p.student_id} | Passcode: ${p.code}', 'Passcode तपशील कॉपी केले')">कॉपी</button>
                       <button class="btn btn-sm" onclick="resetPasscodeDevice('${p.code}')">Device Reset</button>
                       <button class="btn btn-sm" onclick="togglePasscodeActive('${p.code}')">${p.active ? "Revoke" : "Activate"}</button>
@@ -2117,7 +2309,7 @@
 
           ${aTab === "cloud" ? `
             <div class="stat-box" style="margin-bottom:14px;">
-              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync (Max 25,000)</h3>
+              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync (Max 30,000)</h3>
               <div class="grid-2" style="margin-bottom:8px;">
                 <input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" />
                 <input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" />
@@ -2125,7 +2317,7 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-sm btn-primary" onclick="saveSupabaseConfig()">सेव्ह करा</button>
                 <button class="btn btn-sm btn-accent" onclick="syncQuestionsToCloud()">⬆ प्रश्न Cloud वर Sync करा</button>
-                <button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (25,000 मर्यादा)</button>
+                <button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (30,000 मर्यादा)</button>
               </div>
             </div>
 
@@ -2172,10 +2364,16 @@
     async function bootPortal() {
       renderAll();
       checkCloudConnection();
+      pullPasscodesFromCloud().then(() => {
+        if (appState.activeTab === "admin") renderAll();
+      });
+      fetchGithubRepositoryPdfs(false);
       const stored = await loadQuestionsChunked();
-      if (Array.isArray(stored) && stored.length > 0) {
-        appState.questions = stored;
+      if (Array.isArray(stored) && stored.length > 10) {
+        appState.questions = stored.map((q, i) => normalizeQuestion(q, i));
         renderAll();
+      } else {
+        await silentPullFromCloud();
       }
     }
 
