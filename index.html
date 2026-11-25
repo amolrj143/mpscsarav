@@ -430,7 +430,6 @@
     </div>
   </footer>
 
-  <!-- PRO UPGRADE, UPI APPS & DIRECT PROCEDURE MODAL -->
   <div class="modal-backdrop" id="proModal">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -482,7 +481,6 @@
     </div>
   </div>
 
-  <!-- ADMIN LOGIN MODAL -->
   <div class="modal-backdrop" id="adminLoginModal">
     <div class="modal-card" style="max-width:400px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -515,7 +513,7 @@
 
     const IDB_NAME = "MPSC_Sarav_Chunked_DB_v1";
     const IDB_STORE = "q_chunks";
-    const CHUNK_SIZE = 1000;
+    const CHUNK_SIZE = 2000;
 
     function openChunkDB() {
       return new Promise((resolve, reject) => {
@@ -536,32 +534,25 @@
     }
 
     function yieldFrame() {
-      return new Promise(r => setTimeout(r, 10));
+      return new Promise(r => setTimeout(r, 0));
     }
 
     async function saveQuestionsChunked(questionsArr) {
       try {
         const db = await openChunkDB();
+        const totalChunks = Math.ceil(questionsArr.length / CHUNK_SIZE);
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        const store = tx.objectStore(IDB_STORE);
+        store.clear();
+        for (let c = 0; c < totalChunks; c++) {
+          const slice = questionsArr.slice(c * CHUNK_SIZE, (c + 1) * CHUNK_SIZE);
+          store.put(slice, `chunk_${c}`);
+          if (c === 0) store.put(totalChunks, "meta_total_chunks");
+        }
         await new Promise((resolve, reject) => {
-          const tx = db.transaction(IDB_STORE, "readwrite");
-          tx.objectStore(IDB_STORE).clear();
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         });
-
-        const totalChunks = Math.ceil(questionsArr.length / CHUNK_SIZE);
-        for (let c = 0; c < totalChunks; c++) {
-          const slice = questionsArr.slice(c * CHUNK_SIZE, (c + 1) * CHUNK_SIZE);
-          await new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_STORE, "readwrite");
-            const store = tx.objectStore(IDB_STORE);
-            store.put(slice, `chunk_${c}`);
-            if (c === 0) store.put(totalChunks, "meta_total_chunks");
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error);
-          });
-          await yieldFrame();
-        }
         return true;
       } catch (e) {
         return false;
@@ -571,24 +562,27 @@
     async function loadQuestionsChunked() {
       try {
         const db = await openChunkDB();
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const store = tx.objectStore(IDB_STORE);
         const totalChunks = await new Promise((resolve) => {
-          const tx = db.transaction(IDB_STORE, "readonly");
-          const req = tx.objectStore(IDB_STORE).get("meta_total_chunks");
+          const req = store.get("meta_total_chunks");
           req.onsuccess = () => resolve(Number(req.result) || 0);
           req.onerror = () => resolve(0);
         });
         if (!totalChunks) return null;
 
-        const merged = [];
+        const chunkPromises = [];
         for (let c = 0; c < totalChunks; c++) {
-          const part = await new Promise((resolve) => {
-            const tx = db.transaction(IDB_STORE, "readonly");
-            const req = tx.objectStore(IDB_STORE).get(`chunk_${c}`);
+          chunkPromises.push(new Promise((resolve) => {
+            const req = store.get(`chunk_${c}`);
             req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
             req.onerror = () => resolve([]);
-          });
-          for (let i = 0; i < part.length; i++) merged.push(part[i]);
-          await yieldFrame();
+          }));
+        }
+        const parts = await Promise.all(chunkPromises);
+        const merged = [];
+        for (let c = 0; c < parts.length; c++) {
+          for (let i = 0; i < parts[c].length; i++) merged.push(parts[c][i]);
         }
         return merged.length > 0 ? merged : null;
       } catch (e) {
@@ -651,13 +645,13 @@
     }
 
     const MPSC_SUBJECTS = [
-      { key: "चालू घडामोडी", label: "चालू घडामोडी (Current Affairs)", preWeight: 15, mainsPaper: "paper2" },
-      { key: "राज्यघटना व प्रशासन", label: "राज्यघटना व प्रशासन (Polity & Governance)", preWeight: 10, mainsPaper: "paper2" },
-      { key: "इतिहास", label: "इतिहास (History & Maharashtra)", preWeight: 15, mainsPaper: "paper2" },
-      { key: "भूगोल", label: "भूगोल (Geography)", preWeight: 15, mainsPaper: "paper2" },
-      { key: "अर्थव्यवस्था", label: "अर्थव्यवस्था (Economy & Planning)", preWeight: 15, mainsPaper: "paper2" },
-      { key: "सामान्य विज्ञान", label: "सामान्य विज्ञान (General Science)", preWeight: 15, mainsPaper: "paper2" },
-      { key: "अंकगणित व बुद्धिमत्ता", label: "अंकगणित व बुद्धिमत्ता (Aptitude & Reasoning)", preWeight: 15, mainsPaper: "paper2" },
+      { key: "अंकगणित व बुद्धिमत्ता", label: "Reasoning & Arithmetic (अंकगणित व बुद्धिमत्ता)", preWeight: 18, mainsPaper: "paper2" },
+      { key: "सामान्य विज्ञान", label: "General Science (सामान्य विज्ञान)", preWeight: 14, mainsPaper: "paper2" },
+      { key: "चालू घडामोडी", label: "Current Affairs (चालू घडामोडी)", preWeight: 14, mainsPaper: "paper2" },
+      { key: "इतिहास", label: "History (इतिहास व महाराष्ट्र)", preWeight: 12, mainsPaper: "paper2" },
+      { key: "राज्यघटना व प्रशासन", label: "Indian Polity (राज्यघटना व प्रशासन)", preWeight: 12, mainsPaper: "paper2" },
+      { key: "अर्थव्यवस्था", label: "Economics (अर्थव्यवस्था)", preWeight: 12, mainsPaper: "paper2" },
+      { key: "भूगोल", label: "Geography (भूगोल)", preWeight: 11, mainsPaper: "paper2" },
       { key: "मराठी व्याकरण व आकलन", label: "मराठी व्याकरण व आकलन (Paper 1)", preWeight: 0, mainsPaper: "paper1" },
       { key: "इंग्रजी व्याकरण व आकलन", label: "इंग्रजी व्याकरण व आकलन (Paper 1)", preWeight: 0, mainsPaper: "paper1" }
     ];
@@ -665,49 +659,123 @@
     const VALID_SUBJECT_SET = new Set(MPSC_SUBJECTS.map(s => s.key));
 
     const TOPIC_KEYWORDS = {
-      "राज्यघटना व प्रशासन": {
-        "मूलभूत हक्क व मार्गदर्शक तत्त्वे": ["मूलभूत हक्क", "कलम १२", "कलम १३", "कलम १४", "कलम १९", "कलम २१", "कलम ३२", "मार्गदर्शक तत्त्वे", "मूलभूत कर्तव्ये", "स्वातंत्र्याचा हक्क", "समानतेचा हक्क", "शोषणाविरुद्ध", "धार्मिक स्वातंत्र्य", "fundamental rights", "dpsp", "directive principles"],
-        "संसद, राष्ट्रपती व न्यायव्यवस्था": ["कलम 368", "कलम ३६८", "368", "३६८", "घटनादुरुस्ती", "संविधान दुरुस्ती", "राष्ट्रपती", "उपराष्ट्रपती", "संसद", "लोकसभा", "राज्यसभा", "पंतप्रधान", "मुख्यमंत्री", "राज्यपाल", "सर्वोच्च न्यायालय", "उच्च न्यायालय", "महाभियोग", "घटनेतील", "संविधान", "कलम ", "article ", "parliament", "president", "constitution", "amendment"],
-        "पंचायत राज व स्थानिक स्वराज्य": ["पंचायत राज", "ग्रामपंचायत", "जिल्हा परिषद", "पंचायत समिती", "७३वी", "७३ वी", "७४वी", "७४ वी", "नगरपालिका", "महानगरपालिका", "सरपंच", "स्थानिक स्वराज्य", "वसंतराव नाईक", "पी. बी. पाटील", "बलवंतराय मेहता"],
-        "RTI, RTS व लोकसेवा हक्क": ["माहितीचा अधिकार", "rti", "नागरिकांची सनद", "लोकसेवा हक्क", "rts", "महासंचालक", "निवडणूक आयोग", "cag", "कॅग", "महाराष्ट्र लोकसेवा आयोग", "mpsc"]
-      },
-      "इतिहास": {
-        "आधुनिक भारताचा इतिहास": ["१८५७", "1857", "राष्ट्रीय सभा", "काँग्रेस", "गांधीजी", "गांधी", "असहकार", "सविनय कायदेभंग", "चले जाव", "व्हाइसरॉय", "गव्हर्नर", "मोर्ले", "माँटेग्यू", "टिळक", "नेहरू", "सुभाषचंद्र", "भगतसिंग", "swaraj", "congress", "act 1909", "act 1919", "act 1935"],
-        "महाराष्ट्रातील समाजसुधारक": ["फुले", "शाहू", "आंबेडकर", "आगरकर", "कर्वे", "सत्यशोधक", "बहिष्कृत", "समाजसुधारक", "विठ्ठल रामजी शिंदे", "गोपाळ हरी देशमुख", "धोंडो केशव", "रमाबाई", "गोपाळ गणेश आगरकर"],
-        "स्वराज्य व मराठा साम्राज्य": ["शिवाजी", "स्वराज्य", "पेशवे", "मराठा", "किल्ला", "संभाजी", "अष्टप्रधान", "बाजीराव", "तान्हाजी", "रायगड", "प्रतापगड", "सल्तनत", "मुघल", "विजयनगर", "छत्रपती"]
-      },
-      "भूगोल": {
-        "महाराष्ट्राचा भूगोल": ["सह्याद्री", "गोदावरी", "कृष्णा", "तापी", "कोकण", "घाट", "पठार", "मृदा", "भीमा", "वर्धा", "वैनगंगा", "धरण", "बंदर", "महाराष्ट्रातील", "जिल्हा", "विदर्भ", "मराठवाडा", "खानदेश", "त्र्यंबकेश्वर", "महाबळेश्वर"],
-        "भारताचा व जगाचा भूगोल": ["हिमालय", "मान्सून", "नदी", "खनिज", "अक्षांश", "रेखांश", "वाळवंट", "अभयारण्य", "बंगालचा उपसागर", "अरबी समुद्र", "द्वीपकल्प", "पर्वत", "लोकसंख्या", "जनगणना", "geography", "river", "mountain", "latitude", "longitude"],
-        "पर्यावरण व हवामान बदल": ["पर्यावरण", "जैवविविधता", "प्रदूषण", "हवामान", "वनस्पती", "राष्ट्रीय उद्यान", "रामसर", "ओझोन", "कार्बन", "वनक्षेत्र", "ecology", "biodiversity", "ozone", "ramsar"]
-      },
-      "अर्थव्यवस्था": {
-        "भारतीय व महाराष्ट्र अर्थव्यवस्था": ["अर्थसंकल्प", "gdp", "जीडीपी", "महागाई", "रिझर्व्ह बँक", "rbi", "gst", "बँक", "चलन", "रेपो", "महसूल", "वित्तीय", "व्यापार", "निर्यात", "आयात", "economy", "budget", "tax", "bank", "monetary"],
-        "पंचवार्षिक योजना व दारिद्र्य": ["योजना", "दारिद्र्य", "बेरोजगारी", "नीती आयोग", "शेती", "उद्योग", "सबसिडी", "पंचवार्षिक", "कृषी", "उत्पन्न", "मजुरी", "विकास दर", "poverty", "unemployment", "planning commission"]
-      },
-      "सामान्य विज्ञान": {
-        "भौतिकशास्त्र व रसायनशास्त्र": ["वेग", "बल", "विद्युत", "प्रकाश", "ध्वनी", "आम्ल", "अल्कली", "धातू", "अणू", "ऊर्जा", "उष्णता", "तरंग", "भिंग", "आरसा", "विद्युतप्रवाह", "रासायनिक", "वायू", "ऑक्सिजन", "हायड्रोजन", "द्रव्य", "physics", "chemistry", "force", "light", "acid", "element", "velocity", "current"],
-        "जीवशास्त्र व आरोग्य": ["पेशी", "रक्त", "जीवनसत्त्व", "रोग", "वनस्पती", "हृदय", "मज्जासंस्था", "पोषण", "लस", "प्रथिने", "कर्बोदके", "पचन", "श्वसन", "जिवाणू", "विषाणू", "पेशीभित्तिका", "गुणसूत्र", "biology", "vitamin", "disease", "cell", "blood", "vaccine", "bacteria", "virus"]
-      },
-      "अंकगणित व बुद्धिमत्ता": {
-        "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)": ["शेती", "नफा", "तोटा", "व्याज", "गुणोत्तर", "सरासरी", "वेग आणि अंतर", "काम", "टक्के", "सरळव्याज", "चक्रवाढ", "अपूर्णांक", "दशांश", "वर्गमूळ", "घनमूळ", "समीकरण", "क्षेत्रफळ", "परिघ", "वर्तुळ", "त्रिकोण", "ratio", "average", "profit", "loss", "interest", "percentage", "area"],
-        "बुद्धिमत्ता चाचणी व तर्क": ["सांकेतिक", "कोड", "मालिका", "कोडिंग", "नातेसंबंध", "दिशा", "आकृती", "तर्क", "घड्याळ", "कॅलेंडर", "अक्षरमाला", "विजोड", "समान संबंध", "वेन आकृती", "विधान", "निष्कर्ष", "series", "coding", "decoding", "blood relation", "calendar", "clock", "syllogism"]
-      },
       "मराठी व्याकरण व आकलन": {
-        "शब्दसिद्धी, नाम, सर्वनाम व क्रियापद": ["नाम", "सर्वनाम", "विशेषण", "क्रियापद", "समास", "संधी", "प्रयोग", "काळ", "विभक्ती", "अव्यय", "वाक्य", "उद्देश", "विधेय", "केवल प्रयोगी", "उभयान्वयी", "शब्दयोगी", "मराठी व्याकरण", "उतारा", "परिच्छेद"],
-        "वाक्प्रचार, म्हणी व शब्दसंग्रह": ["वाक्प्रचार", "म्हण", "समानार्थी", "विरुद्धार्थी", "शब्दसमूह", "अलंकार", "वृत्त", "रस", "जोडशब्द", "शुद्धलेखन", "पुढीलपैकी कोणता शब्द"]
+        "शब्दसिद्धी, नाम, सर्वनाम व क्रियापद": [
+          "नाम", "सर्वनाम", "विशेषण", "क्रियापद", "समास", "संधी", "प्रयोग", "काळ", "विभक्ती", "अव्यय",
+          "वाक्य", "उद्देश", "विधेय", "केवल प्रयोगी", "उभयान्वयी", "शब्दयोगी", "मराठी व्याकरण", "उतारा", "परिच्छेद",
+          "द्वंद्व समास", "तत्पुरुष समास", "कर्मधारय", "बहुव्रीही", "स्वरसंधी", "व्यंजनसंधी", "विसर्गसंधी",
+          "कर्तरी प्रयोग", "कर्मणी प्रयोग", "भावे प्रयोग", "धातुसाधित", "शब्दांची जात", "पुल्लिंग", "स्त्रीलिंग", "नपुंसकलिंग"
+        ],
+        "वाक्प्रचार, म्हणी व शब्दसंग्रह": [
+          "वाक्प्रचार", "म्हण", "समानार्थी", "विरुद्धार्थी", "शब्दसमूह", "अलंकार", "वृत्त", "रस", "जोडशब्द",
+          "शुद्धलेखन", "पुढीलपैकी कोणता शब्द", "अर्थ सांगा", "म्हणीचा अर्थ", "वाक्प्रचाराचा अर्थ", "उपमा अलंकार",
+          "उत्प्रेक्षा", "रूपक अलंकार", "यमक", "अनुप्रास", "अनेकार्थी", "गटात न बसणारा शब्द"
+        ]
       },
       "इंग्रजी व्याकरण व आकलन": {
-        "Grammar, Tense & Voice": ["tense", "verb", "noun", "preposition", "article", "voice", "narration", "clause", "sentence", "adverb", "adjective", "conjunction", "pronoun", "subject", "grammar", "fill in the blank", "choose the correct", "active", "passive"],
-        "Vocabulary & Comprehension": ["synonym", "antonym", "idiom", "phrase", "spelling", "passage", "meaning of", "opposite of", "one word", "comprehension"]
+        "Grammar, Tense & Voice": [
+          "tense", "verb", "noun", "preposition", "article", "voice", "narration", "clause", "sentence",
+          "adverb", "adjective", "conjunction", "pronoun", "grammar", "fill in the blank", "choose the correct",
+          "active voice", "passive voice", "indirect speech", "direct speech", "question tag", "modal"
+        ],
+        "Vocabulary & Comprehension": [
+          "synonym", "antonym", "idiom", "phrase", "spelling", "passage", "meaning of", "opposite of",
+          "one word substitution", "comprehension", "correctly spelt", "misspelt"
+        ]
+      },
+      "इतिहास": {
+        "आधुनिक भारताचा इतिहास": [
+          "१८५७", "1857", "राष्ट्रीय सभा", "काँग्रेस", "गांधीजी", "गांधी", "असहकार", "सविनय कायदेभंग",
+          "चले जाव", "व्हाइसरॉय", "गव्हर्नर जनरल", "मोर्ले", "माँटेग्यू", "टिळक", "नेहरू", "सुभाषचंद्र", "भगतसिंग",
+          "swaraj", "congress", "act 1909", "act 1919", "act 1935", "बंगालची फाळणी", "दांडी यात्रा", "क्रिप्स", "कॅबिनेट मिशन",
+          "आर्य समाज", "प्रार्थना समाज", "ब्रह्मो समाज", "इतिहास"
+        ],
+        "महाराष्ट्रातील समाजसुधारक": [
+          "फुले", "शाहू", "आंबेडकर", "आगरकर", "कर्वे", "सत्यशोधक", "बहिष्कृत", "समाजसुधारक",
+          "विठ्ठल रामजी शिंदे", "गोपाळ हरी देशमुख", "धोंडो केशव", "रमाबाई", "गोपाळ गणेश आगरकर",
+          "महर्षी कर्वे", "लोकहितवादी", "कर्मवीर भाऊराव पाटील", "गाडगे महाराज", "तुकडोजी महाराज"
+        ],
+        "स्वराज्य व मराठा साम्राज्य": [
+          "शिवाजी", "स्वराज्य", "पेशवे", "मराठा", "किल्ला", "संभाजी", "अष्टप्रधान", "बाजीराव", "तान्हाजी",
+          "रायगड", "प्रतापगड", "सल्तनत", "मुघल", "विजयनगर", "छत्रपती", "अफझलखान", "शाहिस्तेखान", "पुरंदर",
+          "पानिपत", "सरंजामी", "चौथाई", "सरदेशमुखी"
+        ]
+      },
+      "राज्यघटना व प्रशासन": {
+        "मूलभूत हक्क व मार्गदर्शक तत्त्वे": [
+          "मूलभूत हक्क", "कलम १२", "कलम १३", "कलम १४", "कलम १९", "कलम २१", "कलम ३२", "मार्गदर्शक तत्त्वे",
+          "मूलभूत कर्तव्ये", "स्वातंत्र्याचा हक्क", "समानतेचा हक्क", "शोषणाविरुद्ध", "धार्मिक स्वातंत्र्य",
+          "fundamental rights", "dpsp", "directive principles", "fundamental duties"
+        ],
+        "संसद, राष्ट्रपती व न्यायव्यवस्था": [
+          "कलम 368", "कलम ३६८", "368", "३६८", "घटनादुरुस्ती", "संविधान दुरुस्ती", "राष्ट्रपती", "उपराष्ट्रपती",
+          "संसद", "लोकसभा", "राज्यसभा", "पंतप्रधान", "मुख्यमंत्री", "राज्यपाल", "सर्वोच्च न्यायालय", "उच्च न्यायालय",
+          "महाभियोग", "घटनेतील", "संविधान", "कलम ", "article ", "parliament", "president", "constitution", "amendment"
+        ],
+        "पंचायत राज व स्थानिक स्वराज्य": [
+          "पंचायत राज", "ग्रामपंचायत", "जिल्हा परिषद", "पंचायत समिती", "७३वी", "७३ वी", "७४वी", "७४ वी",
+          "नगरपालिका", "महानगरपालिका", "सरपंच", "स्थानिक स्वराज्य", "वसंतराव नाईक", "पी. बी. पाटील", "बलवंतराय मेहता"
+        ],
+        "RTI, RTS व लोकसेवा हक्क": [
+          "माहितीचा अधिकार", "rti", "नागरिकांची सनद", "लोकसेवा हक्क", "rts", "महासंचालक", "निवडणूक आयोग",
+          "cag", "कॅग", "महाराष्ट्र लोकसेवा आयोग", "mpsc", "केंद्रीय माहिती आयोग", "राज्य माहिती आयोग"
+        ]
+      },
+      "भूगोल": {
+        "महाराष्ट्राचा भूगोल": [
+          "सह्याद्री", "गोदावरी", "कृष्णा", "तापी", "कोकण", "घाट", "पठार", "मृदा", "भीमा", "वर्धा",
+          "वैनगंगा", "धरण", "बंदर", "महाराष्ट्रातील", "जिल्हा", "विदर्भ", "मराठवाडा", "खानदेश", "त्र्यंबकेश्वर", "महाबळेश्वर"
+        ],
+        "भारताचा व जगाचा भूगोल": [
+          "हिमालय", "मान्सून", "नदी", "खनिज", "अक्षांश", "रेखांश", "वाळवंट", "अभयारण्य", "बंगालचा उपसागर",
+          "अरबी समुद्र", "द्वीपकल्प", "पर्वत", "लोकसंख्या", "जनगणना", "geography", "river", "mountain", "latitude", "longitude"
+        ],
+        "पर्यावरण व हवामान बदल": [
+          "पर्यावरण", "जैवविविधता", "प्रदूषण", "हवामान", "वनस्पती", "राष्ट्रीय उद्यान", "रामसर", "ओझोन",
+          "कार्बन", "वनक्षेत्र", "ecology", "biodiversity", "ozone", "ramsar", "ग्रीनहाउस"
+        ]
+      },
+      "अर्थव्यवस्था": {
+        "भारतीय व महाराष्ट्र अर्थव्यवस्था": [
+          "अर्थसंकल्प", "gdp", "जीडीपी", "महागाई", "रिझर्व्ह बँक", "rbi", "gst", "बँक", "चलन", "रेपो",
+          "महसूल", "वित्तीय", "व्यापार", "निर्यात", "आयात", "economy", "budget", "tax", "bank", "monetary", "नाबार्ड", "nabard"
+        ],
+        "पंचवार्षिक योजना व दारिद्र्य": [
+          "योजना", "दारिद्र्य", "बेरोजगारी", "नीती आयोग", "शेती", "उद्योग", "सबसिडी", "पंचवार्षिक",
+          "कृषी", "उत्पन्न", "मजुरी", "विकास दर", "poverty", "unemployment", "planning commission"
+        ]
+      },
+      "सामान्य विज्ञान": {
+        "भौतिकशास्त्र व रसायनशास्त्र": [
+          "वेग", "बल", "विद्युत", "प्रकाश", "ध्वनी", "आम्ल", "अल्कली", "धातू", "अणू", "ऊर्जा",
+          "उष्णता", "तरंग", "भिंग", "आरसा", "विद्युतप्रवाह", "रासायनिक", "वायू", "ऑक्सिजन", "हायड्रोजन",
+          "द्रव्य", "physics", "chemistry", "force", "light", "acid", "element", "velocity", "current", "lens", "mirror"
+        ],
+        "जीवशास्त्र व आरोग्य": [
+          "पेशी", "रक्त", "जीवनसत्त्व", "रोग", "वनस्पती", "हृदय", "मज्जासंस्था", "पोषण", "लस", "प्रथिने",
+          "कर्बोदके", "पचन", "श्वसन", "जिवाणू", "विषाणू", "पेशीभित्तिका", "गुणसूत्र", "biology", "vitamin",
+          "disease", "cell", "blood", "vaccine", "bacteria", "virus", "संसर्ग", "ऊती"
+        ]
+      },
+      "अंकगणित व बुद्धिमत्ता": {
+        "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)": [
+          "शेती", "नफा", "तोटा", "व्याज", "गुणोत्तर", "सरासरी", "वेग आणि अंतर", "काम", "टक्के", "सरळव्याज",
+          "चक्रवाढ", "अपूर्णांक", "दशांश", "वर्गमूळ", "घनमूळ", "समीकरण", "क्षेत्रफळ", "परिघ", "वर्तुळ", "त्रिकोण",
+          "ratio", "average", "profit", "loss", "interest", "percentage", "area", "लसावि", "मसावि"
+        ],
+        "बुद्धिमत्ता चाचणी व तर्क": [
+          "सांकेतिक", "कोड", "मालिका", "कोडिंग", "नातेसंबंध", "दिशा", "आकृती", "तर्क", "घड्याळ", "कॅलेंडर",
+          "अक्षरमाला", "विजोड", "समान संबंध", "वेन आकृती", "विधान", "निष्कर्ष", "series", "coding", "decoding",
+          "blood relation", "calendar", "clock", "syllogism", "बुद्धिमत्ता"
+        ]
       },
       "चालू घडामोडी": {
         "राष्ट्रीय घडामोडी": ["राष्ट्रीय मोहीम", "राष्ट्रीय अभियान", "केंद्रीय मंत्रिमंडळ", "संसद अधिवेशन", "नवीन राष्ट्रीय", "ऑपरेशन", "मिशन", "भारतातील पहिले", "नियुक्ती"],
-        "आंतरराष्ट्रीय घडामोडी व करार": ["आंतरराष्ट्रीय करार", "संयुक्त राष्ट्र", "जी-२०", "जी २०", "g20", "ब्रिक्स", "brics", "शिखर परिषद", "जागतिक परिषद", "द्विपक्षीय करार", "युनो", "un", "नाटो", "nato", "आसियान", "asean"],
+        "आंतरराष्ट्रीय घडामोडी व करार": ["आंतरराष्ट्रीय करार", "संयुक्त राष्ट्र", "जी-२०", "जी २०", "g20", "ब्रिक्स", "brics", "शिखर परिषद", "जागतिक परिषद", "द्विपक्षीय करार", "युनो", "नाटो", "nato", "आसियान", "asean"],
         "महाराष्ट्र शासन व योजना": ["महाराष्ट्र शासन", "राज्य शासन", "मुख्यमंत्री योजना", "लाडकी बहीण", "महाराष्ट्र मंत्रिमंडळ", "राज्य सरकारची योजना", "महाराष्ट्र धोरण"],
         "अर्थव्यवस्था, अर्थसंकल्प व निर्देशांक": ["निर्देशांक", "ग्लोबल इंडेक्स", "जागतिक निर्देशांक", "आर्थिक पाहणी", "विकास निर्देशांक", "index", "ranking"],
         "पुरस्कार व क्रीडा": ["पुरस्कार", "नोबेल", "भारतरत्न", "ऑलिम्पिक", "क्रिकेट", "विश्वचषक", "पदक", "खेळाडू", "क्रीडा", "चषक", "अवॉर्ड", "medal", "olympic", "world cup", "award"],
-        "विज्ञान, तंत्रज्ञान व पर्यावरण": ["इस्रो", "isro", "चांद्रयान", "आदित्य एल", "उपग्रह प्रक्षेपण", "एआय", "ai", "क्वांटम", "पर्यावरण दिन", "हवामान परिषद", "cop"]
+        "विज्ञान, तंत्रज्ञान व पर्यावरण": ["इस्रो", "isro", "चांद्रयान", "आदित्य एल", "उपग्रह प्रक्षेपण", "एआय", "क्वांटम", "पर्यावरण दिन", "हवामान परिषद", "cop"]
       }
     };
 
@@ -753,7 +821,7 @@
       }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v20";
+    const STATE_KEY = "mpsc_sarav_2026_state_v21";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -949,8 +1017,8 @@
       const qText = `${q.question_mr || ""} ${(q.options || []).join(" ")}`;
       const qLower = qText.toLowerCase();
 
-      let matchedSubj = null;
-      let matchedTopic = null;
+      let bestSubj = null;
+      let bestTopic = null;
       let bestScore = 0;
 
       for (const sKey of SUBJECT_PRIORITY_ORDER) {
@@ -963,21 +1031,21 @@
             if (!kwClean) continue;
             if (/^[a-z0-9]+$/i.test(kwClean) && kwClean.length <= 4) {
               const re = new RegExp(`\\b${kwClean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-              if (re.test(qLower)) score += 3;
+              if (re.test(qLower)) score += 4;
             } else if (qLower.includes(kwClean)) {
-              score += kwClean.length >= 6 ? 2 : 1;
+              score += kwClean.length >= 6 ? 3 : 2;
             }
           }
           if (score > bestScore) {
             bestScore = score;
-            matchedSubj = sKey;
-            matchedTopic = tName;
+            bestSubj = sKey;
+            bestTopic = tName;
           }
         }
       }
 
-      if (matchedSubj && matchedTopic && bestScore >= 1) {
-        return { subject: matchedSubj, topic: matchedTopic };
+      if (bestSubj && bestTopic && bestScore >= 2) {
+        return { subject: bestSubj, topic: bestTopic };
       }
 
       if (VALID_SUBJECT_SET.has(rawSubj)) {
@@ -993,8 +1061,8 @@
 
     async function reclassifyExistingQuestions() {
       if (!appState.questions.length) return;
-      showToast("सर्व प्रश्नांची कडक विषय व घटकानुसार विभागणी होत आहे...");
-      const updated = [];
+      showToast("सर्व प्रश्नांची अचूक विषय व घटकानुसार विभागणी होत आहे...");
+      const updated = new Array(appState.questions.length);
       for (let i = 0; i < appState.questions.length; i++) {
         const q = appState.questions[i];
         const c = classifySubjectAndTopic(q, i);
@@ -1002,14 +1070,13 @@
         if (c.subject === "मराठी व्याकरण व आकलन" || c.subject === "इंग्रजी व्याकरण व आकलन") {
           stage = "mains1";
         }
-        updated.push({ ...q, subject: c.subject, topic: c.topic, exam_stage: stage });
-        if (i > 0 && i % 2000 === 0) await yieldFrame();
+        updated[i] = { ...q, subject: c.subject, topic: c.topic, exam_stage: stage };
       }
       appState.questions = updated;
       renderAll();
       await saveQuestionsChunked(appState.questions);
       saveState();
-      showToast(`पूर्ण! ${appState.questions.length} प्रश्नांची कडक विभागणी झाली.`);
+      showToast(`पूर्ण! ${appState.questions.length} प्रश्नांची अचूक विभागणी झाली.`);
     }
 
     function normalizeQuestion(raw, idx = 0, forcedType = null) {
@@ -1131,7 +1198,6 @@
         return { ok: false, msg: "कृपया Student ID आणि Passcode दोन्ही टाका." };
       }
 
-      // Always check Supabase live first so codes created on another device/session are recognized
       const cloudRec = await fetchSinglePasscodeFromCloud(code);
       const record = cloudRec || appState.passcodes[code];
 
@@ -1251,11 +1317,8 @@
 
     async function syncAllPasscodesToCloud() {
       const list = Object.values(appState.passcodes);
-      let okCount = 0;
-      for (const rec of list) {
-        const ok = await syncCloudPasscode(rec);
-        if (ok) okCount++;
-      }
+      const results = await Promise.all(list.map(rec => syncCloudPasscode(rec)));
+      const okCount = results.filter(Boolean).length;
       showToast(`${okCount} / ${list.length} Passcodes Cloud वर सिंक झाले.`);
     }
 
@@ -1264,11 +1327,11 @@
         showToast("Supabase URL/Key सेट नाही.");
         return;
       }
-      showToast("प्रश्न क्लाउडवर सिंक होत आहेत...");
+      showToast("प्रश्न क्लाउडवर वेगाने सिंक होत आहेत...");
       const batchSize = 500;
-      let uploaded = 0;
+      const chunks = [];
       for (let i = 0; i < appState.questions.length; i += batchSize) {
-        const chunk = appState.questions.slice(i, i + batchSize).map(q => ({
+        chunks.push(appState.questions.slice(i, i + batchSize).map(q => ({
           id: q.id,
           q_type: q.q_type,
           year: q.year,
@@ -1279,23 +1342,34 @@
           options: q.options,
           answer: q.answer,
           explanation_mr: q.explanation_mr
-        }));
-        const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_questions?on_conflict=id`, {
-          method: "POST",
-          headers: {
-            apikey: appState.supabaseKey,
-            Authorization: `Bearer ${appState.supabaseKey}`,
-            "Content-Type": "application/json",
-            Prefer: "resolution=merge-duplicates"
-          },
-          body: JSON.stringify(chunk)
-        });
-        if (!res.ok) {
-          showToast(`सिंक त्रुटी (${res.status}). SQL टेबल्स तपासणी करा.`);
-          return;
-        }
-        uploaded += chunk.length;
+        })));
       }
+
+      const concurrency = 4;
+      let uploaded = 0;
+      for (let i = 0; i < chunks.length; i += concurrency) {
+        const group = chunks.slice(i, i + concurrency);
+        const responses = await Promise.all(group.map(chunk =>
+          fetch(`${appState.supabaseUrl}/rest/v1/mpsc_questions?on_conflict=id`, {
+            method: "POST",
+            headers: {
+              apikey: appState.supabaseKey,
+              Authorization: `Bearer ${appState.supabaseKey}`,
+              "Content-Type": "application/json",
+              Prefer: "resolution=merge-duplicates"
+            },
+            body: JSON.stringify(chunk)
+          })
+        ));
+        for (let rIdx = 0; rIdx < responses.length; rIdx++) {
+          if (!responses[rIdx].ok) {
+            showToast(`सिंक त्रुटी (${responses[rIdx].status}). SQL टेबल्स तपासणी करा.`);
+            return;
+          }
+          uploaded += group[rIdx].length;
+        }
+      }
+
       await saveQuestionsChunked(appState.questions);
       saveState();
       showToast(`यशस्वी! ${uploaded} प्रश्न क्लाउडवर व कायमस्वरूपी स्टोरेजमध्ये सेव्ह झाले.`);
@@ -1308,12 +1382,13 @@
         return false;
       }
       try {
-        if (!silent) showToast("क्लाउडवरून सर्व प्रश्न (13,390+) लोड होत आहेत...");
+        if (!silent) showToast("क्लाउडवरून सर्व प्रश्न जलद लोड होत आहेत...");
         const cols = "id,q_type,year,subject,topic,exam_stage,question_mr,options,answer,explanation_mr";
         const pageSize = 1000;
+        const maxOffsets = 25;
         const allRows = [];
 
-        for (let offset = 0; offset < 30000; offset += pageSize) {
+        const fetchPage = async (offset) => {
           const endIdx = offset + pageSize - 1;
           const res = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_questions?select=${cols}&limit=${pageSize}&offset=${offset}`, {
             headers: {
@@ -1322,15 +1397,31 @@
               Range: `${offset}-${endIdx}`
             }
           });
-          if (!res.ok) {
-            if (!silent && allRows.length === 0) showToast(`क्लाउडवरून प्रश्न घेताना त्रुटी (${res.status}).`);
-            break;
-          }
+          if (!res.ok) return { ok: false, status: res.status, rows: [] };
           const rows = await res.json();
-          if (!Array.isArray(rows) || rows.length === 0) break;
-          for (let i = 0; i < rows.length; i++) allRows.push(rows[i]);
-          if (rows.length < pageSize) break;
-          await yieldFrame();
+          return { ok: true, status: res.status, rows: Array.isArray(rows) ? rows : [] };
+        };
+
+        const firstWave = await Promise.all([0, 1000, 2000, 3000, 4000].map(fetchPage));
+        if (!firstWave[0].ok && !silent) {
+          showToast(`क्लाउडवरून प्रश्न घेताना त्रुटी (${firstWave[0].status}).`);
+          return false;
+        }
+
+        let reachedEnd = false;
+        for (const p of firstWave) {
+          if (!p.ok || p.rows.length === 0) { reachedEnd = true; break; }
+          for (let i = 0; i < p.rows.length; i++) allRows.push(p.rows[i]);
+          if (p.rows.length < pageSize) { reachedEnd = true; break; }
+        }
+
+        for (let baseOffset = 5000; !reachedEnd && baseOffset < maxOffsets * pageSize; baseOffset += 5000) {
+          const wave = await Promise.all([0, 1, 2, 3, 4].map(k => fetchPage(baseOffset + k * pageSize)));
+          for (const p of wave) {
+            if (!p.ok || p.rows.length === 0) { reachedEnd = true; break; }
+            for (let i = 0; i < p.rows.length; i++) allRows.push(p.rows[i]);
+            if (p.rows.length < pageSize) { reachedEnd = true; break; }
+          }
         }
 
         if (allRows.length > 0) {
@@ -1423,12 +1514,15 @@
         const q = pool[i];
         if (buckets[q.subject]) buckets[q.subject].push(q);
       }
+
+      const scaleFactor = count / 100;
       const picked = [];
       const usedIds = new Set();
 
       for (const s of preSubjs) {
         const subPool = [...buckets[s.key]].sort(() => Math.random() - 0.5);
-        const take = Math.min(s.preWeight, subPool.length);
+        const targetForSubj = Math.max(1, Math.round(s.preWeight * scaleFactor));
+        const take = Math.min(targetForSubj, subPool.length);
         for (let j = 0; j < take && picked.length < count; j++) {
           picked.push({ ...subPool[j], _uid: `${subPool[j].id}_${picked.length}` });
           usedIds.add(subPool[j].id);
@@ -1439,6 +1533,17 @@
         const rest = pool.filter(q => !usedIds.has(q.id)).sort(() => Math.random() - 0.5);
         for (let k = 0; k < rest.length && picked.length < count; k++) {
           picked.push({ ...rest[k], _uid: `${rest[k].id}_${picked.length}` });
+          usedIds.add(rest[k].id);
+        }
+      }
+
+      if (picked.length < count && pool.length > 0) {
+        const shuffledAll = [...pool].sort(() => Math.random() - 0.5);
+        let idx = 0;
+        while (picked.length < count) {
+          const item = shuffledAll[idx % shuffledAll.length];
+          picked.push({ ...item, _uid: `${item.id}_fill_${picked.length}` });
+          idx++;
         }
       }
 
@@ -1449,6 +1554,12 @@
       const matched = appState.questions.filter(q => q.subject === subj && q.topic === topicName);
       const shuffled = [...matched].sort(() => Math.random() - 0.5);
       return shuffled.slice(0, maxCount).map((q, i) => ({ ...q, _uid: `${q.id}_strict_${i}` }));
+    }
+
+    function pickStrictSubjectQuestions(subj, maxCount = 20) {
+      const matched = appState.questions.filter(q => q.subject === subj);
+      const shuffled = [...matched].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, maxCount).map((q, i) => ({ ...q, _uid: `${q.id}_subj_${i}` }));
     }
 
     function pickQuestionsWithRepeats(pool, count) {
@@ -1475,6 +1586,9 @@
       } else if (presetKey === "pre100") {
         const pool = getFilteredPool("pre");
         startExamSession({ title: "MPSC गट-क पूर्व परीक्षा (100 गुण)", modeKey: "pre100", customQuestions: pickBalancedPrelimsQuestions(pool, 100), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
+      } else if (presetKey === "pre50") {
+        const pool = getFilteredPool("pre");
+        startExamSession({ title: "MPSC गट-क पूर्व सराव (50 प्रश्न)", modeKey: "pre50", customQuestions: pickBalancedPrelimsQuestions(pool, 50), count: 50, marksPerQ: 1, negPerQ: 0.25, minutes: 30 });
       } else if (presetKey === "daily20") {
         startExamSession({ title: "दैनिक 20 सराव प्रश्न (Daily Quiz)", modeKey: "daily20", stageFilter: "ALL", count: 20, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
       } else if (presetKey === "mains1") {
@@ -1485,8 +1599,12 @@
         startExamSession({ title: "मुख्य परीक्षा — Paper 2 (सामान्य ज्ञान व विषय)", modeKey: "mains2", requiresPro: true, customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 50), count: 50, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
       } else if (presetKey === "subj20") {
         const subj = decodeURIComponent(extraData);
-        const pool = appState.questions.filter(q => q.subject === subj);
-        startExamSession({ title: `${subj} — 20 प्रश्न`, modeKey: "subj20", customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 20), count: 20, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
+        const strictSubj = pickStrictSubjectQuestions(subj, 20);
+        if (!strictSubj.length) {
+          showToast(`'${subj}' या विषयाचे प्रश्न उपलब्ध नाहीत.`);
+          return;
+        }
+        startExamSession({ title: `${subj} — ${strictSubj.length} प्रश्न`, modeKey: "subj20", customQuestions: strictSubj, count: strictSubj.length, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
       } else if (presetKey === "topic20") {
         const [encSubj, encTopic] = extraData.split("||");
         const subj = decodeURIComponent(encSubj);
@@ -1963,7 +2081,7 @@
               <div>
                 <span class="badge badge-blue">डेमो पेपर १ • पूर्व परीक्षा</span>
                 <h3 style="margin:6px 0 4px;font-size:15px;">पूर्व परीक्षा डेमो (100 प्रश्न • 60 मि.)</h3>
-                <div style="font-size:12px;color:var(--muted);">7 विषय, +1 गुण व -0.25 निगेटिव्ह मार्किंग पॅटर्ननुसार 1 डेमो पेपर.</div>
+                <div style="font-size:12px;color:var(--muted);">7 विषय भारांश, +1 गुण व -0.25 निगेटिव्ह मार्किंग पॅटर्ननुसार 1 डेमो पेपर.</div>
               </div>
               <button class="btn btn-primary btn-sm" onclick="startExamByKey('demo_pre')">पूर्व डेमो सुरू करा</button>
             </div>
@@ -1994,18 +2112,21 @@
       const preSubjects = MPSC_SUBJECTS.filter(s => s.preWeight > 0);
       return `
         <div class="card">
-          <h2 class="card-title">📝 MPSC गट-क पूर्व परीक्षा (100 गुण पॅटर्न)</h2>
-          <p class="card-sub">एकूण 100 प्रश्न • 100 गुण • 60 मिनिटे • चुकीच्या उत्तरासाठी -0.25 गुण (1/4 निगेटिव्ह मार्किंग).</p>
-          <button class="btn btn-primary" onclick="startExamByKey('pre100')">▶ संपूर्ण 100 गुणांची पूर्व परीक्षा सुरू करा</button>
+          <h2 class="card-title">📝 MPSC गट-क पूर्व परीक्षा (100 गुण • Prelims Weightage Pattern)</h2>
+          <p class="card-sub">एकूण 100 प्रश्न • 100 गुण • 60 मिनिटे • चुकीच्या उत्तरासाठी -0.25 गुण (1/4 निगेटिव्ह मार्किंग) • Final merit साठी Qualifying.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="startExamByKey('pre100')">▶ संपूर्ण 100 गुणांची पूर्व परीक्षा सुरू करा</button>
+            <button class="btn btn-accent" onclick="startExamByKey('pre50')">⚡ 50 प्रश्नांची पूर्व सराव चाचणी</button>
+          </div>
 
-          <h3 style="font-size:15px;font-weight:800;margin:18px 0 8px;">पूर्व परीक्षा विषय भारांश (100 गुण)</h3>
+          <h3 style="font-size:15px;font-weight:800;margin:18px 0 8px;">पूर्व परीक्षा विषय भारांश (100 प्रश्न पॅटर्ननुसार)</h3>
           <table>
-            <thead><tr><th>विषय</th><th>अंदाजे भारांश (गुण)</th><th>सराव</th></tr></thead>
+            <thead><tr><th>विषय</th><th>अंदाजे भारांश</th><th>सराव</th></tr></thead>
             <tbody>
               ${preSubjects.map(s => `
                 <tr>
                   <td><strong>${s.label}</strong></td>
-                  <td>${s.preWeight} गुण</td>
+                  <td>${s.preWeight} प्रश्न</td>
                   <td><button class="btn btn-sm" onclick="startExamByKey('subj20', '${encodeURIComponent(s.key)}')">20 प्रश्न सराव</button></td>
                 </tr>
               `).join("")}
@@ -2362,7 +2483,7 @@
 
           ${aTab === "cloud" ? `
             <div class="stat-box" style="margin-bottom:14px;">
-              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync (Max 30,000)</h3>
+              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync (Max 25,000)</h3>
               <div class="grid-2" style="margin-bottom:8px;">
                 <input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" />
                 <input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" />
@@ -2370,7 +2491,7 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-sm btn-primary" onclick="saveSupabaseConfig()">सेव्ह करा</button>
                 <button class="btn btn-sm btn-accent" onclick="syncQuestionsToCloud()">⬆ प्रश्न Cloud वर Sync करा</button>
-                <button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (30,000 मर्यादा)</button>
+                <button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (25,000 मर्यादा)</button>
               </div>
             </div>
 
