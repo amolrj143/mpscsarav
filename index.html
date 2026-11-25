@@ -10,7 +10,7 @@
   <style>
     :root { --bg:#f4f7fb;--surface:#ffffff;--surface-alt:#f8fafc;--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--primary:#1d4ed8;--primary-dark:#1e3a8a;--primary-soft:#eff6ff;--accent:#0d9488;--accent-soft:#f0fdfa;--amber:#d97706;--amber-soft:#fffbeb;--rose:#dc2626;--rose-soft:#fef2f2;--emerald:#059669;--emerald-soft:#ecfdf5;--whatsapp:#16a34a;--radius:14px;--shadow:0 8px 24px -6px rgba(15,23,42,.08),0 2px 6px -1px rgba(15,23,42,.04); }
     * { box-sizing:border-box; }
-    body { margin:0;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55; }
+    body { margin:0;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink);line-height:1.58; }
     button,input,select,textarea { font-family:inherit; }
     .container { max-width:1240px;margin:0 auto;padding:0 16px; }
     .topbar { background:linear-gradient(120deg,#0f172a 0%,#1e3a8a 60%,#1d4ed8 100%);color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 4px 18px rgba(15,23,42,.18); }
@@ -319,6 +319,48 @@
       window.location.href = targetUrl;
     }
 
+    // Smart OCR & Devanagari text fixer for broken/fragmented words from PDF/OCR extraction
+    const OCR_WORD_FIXES = [
+      [/हणजे/g, "म्हणजे"],
+      [/श\s+द/g, "शब्द"],
+      [/ज\s+ात/g, "राज्यात"],
+      [/सु\s+व\s+च\s+े\s+े/g, "सुव्यवस्थेचे"],
+      [/ह\s+कांचे/g, "हक्कांचे"],
+      [/संर\s+ण/g, "संरक्षण"],
+      [/वधाये/g, "विधेयक"],
+      [/म\s+ला/g, "मुला"],
+      [/अमलीपदाथय/g, "अमलीपदार्थ"],
+      [/नियमयत/g, "निर्मित"],
+      [/कें\s+द्राने/g, "केंद्राने"],
+      [/सवय/g, "सर्व"],
+      [/वधाने/g, "विधाने"],
+      [/वधारत/g, "विचारात"],
+      [/या\s+त/g, "यात"],
+      [/स\s+व\s+ायालयाचे/g, "सर्वोच्च न्यायालयाचे"],
+      [/मु\s+य\s+यायमत/g, "मुख्य न्यायमूर्ती"],
+      [/यायमत/g, "न्यायमूर्ती"],
+      [/ह\s+लेले/g, "झालेले"],
+      [/रा\s+ीय/g, "राष्ट्रीय"],
+      [/अ\s+य/g, "अध्यक्ष"],
+      [/सद\s+य/g, "सदस्य"],
+      [/मागास\s+वग\s+य/g, "मागासवर्गीय"],
+      [/बाल\s+ह\s+क\s+संर\s+ण/g, "बाल हक्क संरक्षण"],
+      [/आ\s+ण\s+अपंग/g, "आणि अपंग"],
+      [/साठ\s+चे\s+मु\s+य\s+आयु/g, "साठीचे मुख्य आयुक्त"],
+      [/आर्थिक\s+सुधारणा/g, "आर्थिक सुधारणा"]
+    ];
+
+    function cleanBrokenMarathiText(rawText) {
+      let s = String(rawText || "");
+      if (!s) return "";
+      for (let i = 0; i < OCR_WORD_FIXES.length; i++) {
+        s = s.replace(OCR_WORD_FIXES[i][0], OCR_WORD_FIXES[i][1]);
+      }
+      // Collapse stray spaces between short Devanagari fragments while keeping normal word spacing
+      s = s.replace(/\s{2,}/g, " ").trim();
+      return s;
+    }
+
     const MPSC_SUBJECTS = [
       { key: "अंकगणित व बुद्धिमत्ता", label: "Reasoning & Arithmetic (अंकगणित व बुद्धिमत्ता)", preWeight: 18, mainsPaper: "paper2" },
       { key: "सामान्य विज्ञान", label: "General Science (सामान्य विज्ञान)", preWeight: 14, mainsPaper: "paper2" },
@@ -335,56 +377,56 @@
 
     const TOPIC_KEYWORDS = {
       "मराठी व्याकरण व आकलन": {
-        "शब्दसिद्धी, नाम, सर्वनाम व क्रियापद": ["नाम","सर्वनाम","विशेषण","क्रियापद","समास","संधी","प्रयोग","काळ","विभक्ती","अव्यय","वाक्य","उद्देश","विधेय","केवल प्रयोगी","उभयान्वयी","शब्दयोगी","मराठी व्याकरण","द्वंद्व समास","तत्पुरुष समास","कर्मधारय","बहुव्रीही","स्वरसंधी","व्यंजनसंधी","विसर्गसंधी","कर्तरी प्रयोग","कर्मणी प्रयोग","भावे प्रयोग","धातुसाधित","शब्दांची जात","पुल्लिंग","स्त्रीलिंग","नपुंसकलिंग","सामान्यरूप","कृदन्त","तद्धित","उपसर्ग","प्रत्यय"],
-        "वाक्प्रचार, म्हणी व शब्दसंग्रह": ["वाक्प्रचार","म्हण","समानार्थी","विरुद्धार्थी","शब्दसमूह","अलंकार","वृत्त","रस","जोडशब्द","शुद्धलेखन","पुढीलपैकी कोणता शब्द","म्हणीचा अर्थ","वाक्प्रचाराचा अर्थ","उपमा अलंकार","उत्प्रेक्षा","रूपक अलंकार","यमक","अनुप्रास","अनेकार्थी","गटात न बसणारा शब्द","शब्दसिद्धी","तत्सम","तद्भव","देशी","परभाषीय"],
+        "शब्दसिद्धी, नाम, सर्वनाम व क्रियापद": ["नाम","सर्वनाम","विशेषण","क्रियापद","समास","संधी","प्रयोग","काळ","विभक्ती","अव्यय","वाक्य","उद्देश","विधेय","केवल प्रयोगी","उभयान्वयी","शब्दयोगी","मराठी व्याकरण","द्वंद्व समास","तत्पुरुष समास","कर्मधारय","बहुव्रीही","स्वरसंधी","व्यंजनसंधी","विसर्गसंधी","कर्तरी प्रयोग","कर्मणी प्रयोग","भावे प्रयोग","धातुसाधित","शब्दांची जात"],
+        "वाक्प्रचार, म्हणी व शब्दसंग्रह": ["वाक्प्रचार","म्हण","समानार्थी","विरुद्धार्थी","शब्दसमूह","अलंकार","वृत्त","रस","जोडशब्द","शुद्धलेखन","पुढीलपैकी कोणता शब्द","म्हणीचा अर्थ","वाक्प्रचाराचा अर्थ","उपमा अलंकार","उत्प्रेक्षा","रूपक अलंकार","यमक","अनुप्रास","अनेकार्थी","गटात न बसणारा शब्द"],
         "मराठी व्याकरण संकीर्ण (Misc)": []
       },
       "इंग्रजी व्याकरण व आकलन": {
-        "Grammar, Tense & Voice": ["tense","verb","noun","preposition","article","voice","narration","clause","sentence","adverb","adjective","conjunction","pronoun","grammar","fill in the blank","choose the correct","active voice","passive voice","indirect speech","direct speech","question tag","modal","participle","gerund","infinitive","determiner","degree"],
-        "Vocabulary & Comprehension": ["synonym","antonym","idiom","phrase","spelling","passage","meaning of","opposite of","one word substitution","comprehension","correctly spelt","misspelt","prefix","suffix","proverb"],
+        "Grammar, Tense & Voice": ["tense","verb","noun","preposition","article","voice","narration","clause","sentence","adverb","adjective","conjunction","pronoun","grammar","fill in the blank","choose the correct","active voice","passive voice","indirect speech","direct speech","question tag","modal"],
+        "Vocabulary & Comprehension": ["synonym","antonym","idiom","phrase","spelling","passage","meaning of","opposite of","one word substitution","comprehension","correctly spelt","misspelt"],
         "English Misc (संकीर्ण)": []
       },
       "इतिहास": {
-        "आधुनिक भारताचा इतिहास": ["१८५७","1857","राष्ट्रीय सभा","काँग्रेस","गांधीजी","गांधी","असहकार","सविनय कायदेभंग","चले जाव","व्हाइसरॉय","गव्हर्नर जनरल","मोर्ले","माँटेग्यू","टिळक","नेहरू","सुभाषचंद्र","भगतसिंग","swaraj","congress","act 1909","act 1919","act 1935","बंगालची फाळणी","दांडी यात्रा","क्रिप्स","कॅबिनेट मिशन","आर्य समाज","प्रार्थना समाज","ब्रह्मो समाज","रौलट","जालियनवाला","होमरूल","स्वदेशी","जहाल","मवाळ","क्रांतिकारक","वासुदेव बळवंत","चाफेकर","सावरकर"],
-        "महाराष्ट्रातील समाजसुधारक": ["फुले","शाहू","आंबेडकर","आगरकर","कर्वे","सत्यशोधक","बहिष्कृत","समाजसुधारक","विठ्ठल रामजी शिंदे","गोपाळ हरी देशमुख","धोंडो केशव","रमाबाई","गोपाळ गणेश आगरकर","महर्षी कर्वे","लोकहितवादी","कर्मवीर भाऊराव पाटील","गाडगे महाराज","तुकडोजी महाराज","बाळशास्त्री जांभेकर","दादोबा पांडुरंग","भाऊ दाजी लाड","न्यायमूर्ती रानडे","पंडिता रमाबाई"],
-        "स्वराज्य व मराठा साम्राज्य": ["शिवाजी","स्वराज्य","पेशवे","मराठा","किल्ला","संभाजी","अष्टप्रधान","बाजीराव","तान्हाजी","रायगड","प्रतापगड","सल्तनत","मुघल","विजयनगर","छत्रपती","अफझलखान","शाहिस्तेखान","पुरंदर","पानिपत","चौथाई","सरदेशमुखी","सातवाहन","वाकाटक","चालुक्य","राष्ट्रकूट","यादव","बहमनी","निजामशाही","आदिलशाही"],
+        "आधुनिक भारताचा इतिहास": ["१८५७","1857","राष्ट्रीय सभा","काँग्रेस","गांधीजी","गांधी","असहकार","सविनय कायदेभंग","चले जाव","व्हाइसरॉय","गव्हर्नर जनरल","मोर्ले","माँटेग्यू","टिळक","नेहरू","सुभाषचंद्र","भगतसिंग","swaraj","congress","act 1909","act 1919","act 1935","बंगालची फाळणी","दांडी यात्रा","क्रिप्स","कॅबिनेट मिशन","आर्य समाज","प्रार्थना समाज","ब्रह्मो समाज"],
+        "महाराष्ट्रातील समाजसुधारक": ["फुले","शाहू","आंबेडकर","आगरकर","कर्वे","सत्यशोधक","बहिष्कृत","समाजसुधारक","विठ्ठल रामजी शिंदे","गोपाळ हरी देशमुख","धोंडो केशव","रमाबाई","गोपाळ गणेश आगरकर","महर्षी कर्वे","लोकहितवादी","कर्मवीर भाऊराव पाटील","गाडगे महाराज","तुकडोजी महाराज"],
+        "स्वराज्य व मराठा साम्राज्य": ["शिवाजी","स्वराज्य","पेशवे","मराठा","किल्ला","संभाजी","अष्टप्रधान","बाजीराव","तान्हाजी","रायगड","प्रतापगड","सल्तनत","मुघल","विजयनगर","छत्रपती","अफझलखान","शाहिस्तेखान","पुरंदर","पानिपत","चौथाई","सरदेशमुखी"],
         "इतिहास संकीर्ण (Misc)": []
       },
       "राज्यघटना व प्रशासन": {
-        "मूलभूत हक्क व मार्गदर्शक तत्त्वे": ["मूलभूत हक्क","कलम १२","कलम १३","कलम १४","कलम १५","कलम १६","कलम १७","कलम १८","कलम १९","कलम २०","कलम २१","कलम २२","कलम २३","कलम २४","कलम २५","कलम ३२","मार्गदर्शक तत्त्वे","मूलभूत कर्तव्ये","स्वातंत्र्याचा हक्क","समानतेचा हक्क","शोषणाविरुद्ध","धार्मिक स्वातंत्र्य","fundamental rights","dpsp","directive principles","fundamental duties"],
-        "संसद, राष्ट्रपती व न्यायव्यवस्था": ["कलम 368","कलम ३६८","368","३६८","घटनादुरुस्ती","संविधान दुरुस्ती","राष्ट्रपती","उपराष्ट्रपती","संसद","लोकसभा","राज्यसभा","पंतप्रधान","मुख्यमंत्री","राज्यपाल","सर्वोच्च न्यायालय","उच्च न्यायालय","महाभियोग","घटनेतील","संविधान","कलम ","article ","parliament","president","constitution","amendment","अधिवेशन","विधेयक","धनविधेयक","महान्यायवादी","महाधिवक्ता","नियंत्रक व महालेखापरीक्षक","आणीबाणी","कलम ३५२","कलम ३५६","कलम ३६०"],
-        "पंचायत राज व स्थानिक स्वराज्य": ["पंचायत राज","ग्रामपंचायत","जिल्हा परिषद","पंचायत समिती","७३वी","७३ वी","७४वी","७४ वी","नगरपालिका","महानगरपालिका","सरपंच","स्थानिक स्वराज्य","वसंतराव नाईक","पी. बी. पाटील","बलवंतराय मेहता","अशोक मेहता","ग्रामसभा","गटविकास अधिकारी","मुख्य कार्यकारी अधिकारी"],
-        "RTI, RTS व लोकसेवा हक्क": ["माहितीचा अधिकार","rti","नागरिकांची सनद","लोकसेवा हक्क","rts","महासंचालक","निवडणूक आयोग","cag","कॅग","महाराष्ट्र लोकसेवा आयोग","mpsc","केंद्रीय माहिती आयोग","राज्य माहिती आयोग","लोकपाल","लोकायुक्त"],
+        "मूलभूत हक्क व मार्गदर्शक तत्त्वे": ["मूलभूत हक्क","कलम १२","कलम १३","कलम १४","कलम १९","कलम २१","कलम ३२","मार्गदर्शक तत्त्वे","मूलभूत कर्तव्ये","स्वातंत्र्याचा हक्क","समानतेचा हक्क","शोषणाविरुद्ध","धार्मिक स्वातंत्र्य","fundamental rights","dpsp","directive principles","fundamental duties"],
+        "संसद, राष्ट्रपती व न्यायव्यवस्था": ["कलम 368","कलम ३६८","368","३६८","घटनादुरुस्ती","संविधान दुरुस्ती","राष्ट्रपती","उपराष्ट्रपती","संसद","लोकसभा","राज्यसभा","पंतप्रधान","मुख्यमंत्री","राज्यपाल","सर्वोच्च न्यायालय","उच्च न्यायालय","महाभियोग","घटनेतील","संविधान","कलम ","article ","parliament","president","constitution","amendment","विधेयक","मानवी हक्क","आयोग","न्यायमूर्ती"],
+        "पंचायत राज व स्थानिक स्वराज्य": ["पंचायत राज","ग्रामपंचायत","जिल्हा परिषद","पंचायत समिती","७३वी","७३ वी","७४वी","७४ वी","नगरपालिका","महानगरपालिका","सरपंच","स्थानिक स्वराज्य","वसंतराव नाईक","पी. बी. पाटील","बलवंतराय मेहता"],
+        "RTI, RTS व लोकसेवा हक्क": ["माहितीचा अधिकार","माहिती अधिकार कायदा","rti","नागरिकांची सनद","लोकसेवा हक्क","rts","महासंचालक","निवडणूक आयोग","cag","कॅग","महाराष्ट्र लोकसेवा आयोग","mpsc","कायदा","केंद्रीय माहिती आयोग","राज्य माहिती आयोग"],
         "राज्यघटना व प्रशासन संकीर्ण (Misc)": []
       },
       "भूगोल": {
-        "महाराष्ट्राचा भूगोल": ["चिखलदरा","सातपुडा","गाबिलगड","मेळघाट","बालाघाट","शंभू महादेव","सह्याद्री","गोदावरी","कृष्णा","तापी","कोकण","घाट","पठार","मृदा","भीमा","वर्धा","वैनगंगा","धरण","बंदर","प्रशासकीय विभाग","जिल्हा","विदर्भ","मराठवाडा","खानदेश","त्र्यंबकेश्वर","महाबळेश्वर","पीक उत्पादन","पाण्याचा वापर","पाणी देण्याची कार्यक्षमता","अजिंठा","सातमाळा","हरिश्चंद्रगड","कळसूबाई","कोयना","उजनी","जायकवाडी","मुळा","प्रवरा","पैनगंगा","मांजरा","तेरणा","सावित्री","उल्हास","वैतरणा"],
-        "भारताचा व जगाचा भूगोल": ["हिमालय","मान्सून","नदी","खनिज","अक्षांश","रेखांश","वाळवंट","अभयारण्य","बंगालचा उपसागर","अरबी समुद्र","द्वीपकल्प","पर्वत","लोकसंख्या","जनगणना","geography","river","mountain","latitude","longitude","गंगा","ब्रह्मपुत्रा","यमुना","नर्मदा","महानदी","कावेरी","दख्खन","पश्चिम घाट","पूर्व घाट","अंदमान","निकोबार","लक्षद्वीप","सूर्यमाला","ग्रह","भूकंप","ज्वालामुखी","वातावरण"],
-        "पर्यावरण व हवामान बदल": ["पर्यावरण","जैवविविधता","प्रदूषण","हवामान","वनस्पती","राष्ट्रीय उद्यान","रामसर","ओझोन","कार्बन","वनक्षेत्र","ecology","biodiversity","ozone","ramsar","ग्रीनहाउस","हरितगृह","व्याघ्र प्रकल्प","अभयारण्य","चिपको","जंगल","वने"],
+        "महाराष्ट्राचा भूगोल": ["चिखलदरा","सातपुडा","गाबिलगड","मेळघाट","बालाघाट","शंभू महादेव","सह्याद्री","गोदावरी","कृष्णा","तापी","कोकण","घाट","पठार","मृदा","भीमा","वर्धा","वैनगंगा","धरण","बंदर","प्रशासकीय विभाग","जिल्हा","विदर्भ","मराठवाडा","खानदेश","त्र्यंबकेश्वर","महाबळेश्वर","पीक उत्पादन","पाण्याचा वापर","पाणी देण्याची कार्यक्षमता","सिंचन","बागायती"],
+        "भारताचा व जगाचा भूगोल": ["हिमालय","मान्सून","नदी","खनिज","अक्षांश","रेखांश","वाळवंट","अभयारण्य","बंगालचा उपसागर","अरबी समुद्र","द्वीपकल्प","पर्वत","लोकसंख्या","जनगणना","geography","river","mountain","latitude","longitude"],
+        "पर्यावरण व हवामान बदल": ["पर्यावरण","जैवविविधता","प्रदूषण","हवामान","वनस्पती","राष्ट्रीय उद्यान","रामसर","ओझोन","कार्बन","वनक्षेत्र","ecology","biodiversity","ozone","ramsar","ग्रीनहाउस"],
         "भूगोल संकीर्ण (Misc)": []
       },
       "अर्थव्यवस्था": {
-        "भारतीय व महाराष्ट्र अर्थव्यवस्था": ["अर्थसंकल्प","gdp","जीडीपी","महागाई","रिझर्व्ह बँक","rbi","gst","बँक","चलन","रेपो","महसूल","वित्तीय","व्यापार","निर्यात","आयात","economy","budget","tax","bank","monetary","नाबार्ड","nabard","महालनोबिस","गरिबी हटाव","दारिद्र्यात घट","उपजीविका","करप्रणाली","तुटीचा अर्थभरणा","भाववाढ","चलनवाढ","आर्थिक सुधारणा","खाजगीकरण","उदारीकरण","जागतिकीकरण","सेबी","sebi","नियोजन आयोग"],
-        "पंचवार्षिक योजना व दारिद्र्य": ["पंचवार्षिक योजना","दुसरी पंचवार्षिक","चौथी पंचवार्षिक","पाचवी पंचवार्षिक","अकरावी पंचवार्षिक","दारिद्र्य","बेरोजगारी","नीती आयोग","सबसिडी","पंचवार्षिक","विकास दर","poverty","unemployment","planning commission","तेंडुलकर समिती","रंगराजन समिती","लकडावाला","हरितक्रांती","धवलक्रांती","रोजगार हमी","मनरेगा"],
+        "भारतीय व महाराष्ट्र अर्थव्यवस्था": ["अर्थसंकल्प","gdp","जीडीपी","महागाई","रिझर्व्ह बँक","rbi","gst","बँक","चलन","रेपो","महसूल","वित्तीय","व्यापार","निर्यात","आयात","economy","budget","tax","bank","monetary","नाबार्ड","nabard","महालनोबिस","गरिबी हटाव","दारिद्र्यात घट","उपजीविका","आर्थिक सुधारणा","गुंतवणूक","अमलीपदार्थ"],
+        "पंचवार्षिक योजना व दारिद्र्य": ["पंचवार्षिक योजना","दुसरी पंचवार्षिक","चौथी पंचवार्षिक","पाचवी पंचवार्षिक","अकरावी पंचवार्षिक","दारिद्र्य","बेरोजगारी","नीती आयोग","सबसिडी","पंचवार्षिक","विकास दर","poverty","unemployment","planning commission"],
         "अर्थव्यवस्था संकीर्ण (Misc)": []
       },
       "सामान्य विज्ञान": {
-        "भौतिकशास्त्र व रसायनशास्त्र": ["वेग","बल","विद्युत","प्रकाश","ध्वनी","आम्ल","अल्कली","धातू","अणू","ऊर्जा","उष्णता","तरंग","भिंग","आरसा","विद्युतप्रवाह","रासायनिक","वायू","ऑक्सिजन","हायड्रोजन","द्रव्य","physics","chemistry","force","light","acid","element","velocity","current","lens","mirror","गुरुत्वाकर्षण","न्यूटन","ओहम","व्होल्ट","अँपिअर","वॅट","रेणू","संयुग","मिश्रण","आवर्तसारणी","क्षार","कार्बनिक","किरणोत्सार","चुंबक","परावर्तन","अपवर्तन"],
-        "जीवशास्त्र व आरोग्य": ["पेशी","रक्त","जीवनसत्त्व","रोग","वनस्पती","हृदय","मज्जासंस्था","पोषण","लस","प्रथिने","कर्बोदके","पचन","श्वसन","जिवाणू","विषाणू","पेशीभित्तिका","गुणसूत्र","biology","vitamin","disease","cell","blood","vaccine","bacteria","virus","संसर्ग","ऊती","प्रकाशसंश्लेषण","हरितद्रव्य","मेंदू","यकृत","मूत्रपिंड","संप्रेरके","विकरे","अंतःस्रावी","अनुवंशिकता","मेंडेल","डार्विन","कवक","शैवाल"],
+        "भौतिकशास्त्र व रसायनशास्त्र": ["वेग","बल","विद्युत","प्रकाश","ध्वनी","आम्ल","अल्कली","धातू","अणू","ऊर्जा","उष्णता","तरंग","भिंग","आरसा","विद्युतप्रवाह","रासायनिक","वायू","ऑक्सिजन","हायड्रोजन","द्रव्य","physics","chemistry","force","light","acid","element","velocity","current","lens","mirror"],
+        "जीवशास्त्र व आरोग्य": ["पेशी","रक्त","जीवनसत्त्व","रोग","वनस्पती","हृदय","मज्जासंस्था","पोषण","लस","प्रथिने","कर्बोदके","पचन","श्वसन","जिवाणू","विषाणू","पेशीभित्तिका","गुणसूत्र","biology","vitamin","disease","cell","blood","vaccine","bacteria","virus","संसर्ग","ऊती"],
         "सामान्य विज्ञान संकीर्ण (Misc)": []
       },
       "अंकगणित व बुद्धिमत्ता": {
-        "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)": ["नफा","तोटा","व्याज","गुणोत्तर","सरासरी","वेग आणि अंतर","काम","टक्के","सरळव्याज","चक्रवाढ","अपूर्णांक","दशांश","वर्गमूळ","घनमूळ","समीकरण","क्षेत्रफळ","परिघ","वर्तुळ","त्रिकोण","ratio","average","profit","loss","interest","percentage","area","लसावि","मसावि","आवर्ती दशांश","शेकडेवारी","भांडवल","भागीदारी","नळ व टाकी","रेल्वे","बोट व प्रवाह","चौरस","आयत","घनफळ","संभाव्यता"],
-        "बुद्धिमत्ता चाचणी व तर्क": ["सांकेतिक","कोड","मालिका","कोडिंग","नातेसंबंध","दिशा","आकृती","तर्क","घड्याळ","कॅलेंडर","अक्षरमाला","विजोड","समान संबंध","वेन आकृती","series","coding","decoding","blood relation","calendar","clock","syllogism","बुद्धिमत्ता","रांगेतील स्थान","घन व फासे","पाण्यातील प्रतिबिंब","आरशातील प्रतिमा"],
+        "अंकगणित (शेती, नफा-तोटा, गुणोत्तर)": ["नफा","तोटा","व्याज","गुणोत्तर","सरासरी","वेग आणि अंतर","काम","टक्के","सरळव्याज","चक्रवाढ","अपूर्णांक","दशांश","वर्गमूळ","घनमूळ","समीकरण","क्षेत्रफळ","परिघ","वर्तुळ","त्रिकोण","ratio","average","profit","loss","interest","percentage","area","लसावि","मसावि","आवर्ती दशांश"],
+        "बुद्धिमत्ता चाचणी व तर्क": ["सांकेतिक","कोड","मालिका","कोडिंग","नातेसंबंध","दिशा","आकृती","तर्क","घड्याळ","कॅलेंडर","अक्षरमाला","विजोड","समान संबंध","वेन आकृती","series","coding","decoding","blood relation","calendar","clock","syllogism","बुद्धिमत्ता"],
         "अंकगणित व बुद्धिमत्ता संकीर्ण (Misc)": []
       },
       "चालू घडामोडी": {
-        "राष्ट्रीय घडामोडी": ["राष्ट्रीय मोहीम","राष्ट्रीय अभियान","केंद्रीय मंत्रिमंडळ","संसद अधिवेशन","नवीन राष्ट्रीय","ऑपरेशन","मिशन","भारतातील पहिले","पंतप्रधान नरेंद्र मोदी","राष्ट्रपती द्रौपदी मुर्मू","निवडणूक २०२४","निवडणूक २०२५","निवडणूक २०२६"],
-        "आंतरराष्ट्रीय घडामोडी व करार": ["आंतरराष्ट्रीय करार","संयुक्त राष्ट्र","जी-२०","जी २०","g20","ब्रिक्स","brics","शिखर परिषद","जागतिक परिषद","द्विपक्षीय करार","युनो","नाटो","nato","आसियान","asean","युनेस्को","unesco","जागतिक आरोग्य संघटना","who"],
-        "महाराष्ट्र शासन व योजना": ["महाराष्ट्र शासन","राज्य शासन","मुख्यमंत्री योजना","लाडकी बहीण","महाराष्ट्र मंत्रिमंडळ","राज्य सरकारची योजना","महाराष्ट्र धोरण","शासन निर्णय","महाराष्ट्र अर्थसंकल्प"],
-        "अर्थव्यवस्था, अर्थसंकल्प व निर्देशांक": ["निर्देशांक","ग्लोबल इंडेक्स","जागतिक निर्देशांक","आर्थिक पाहणी","विकास निर्देशांक","index","ranking","मानव विकास निर्देशांक","भूक निर्देशांक"],
-        "पुरस्कार व क्रीडा": ["पुरस्कार","नोबेल","भारतरत्न","ऑलिम्पिक","क्रिकेट","विश्वचषक","पदक","खेळाडू","क्रीडा","चषक","अवॉर्ड","medal","olympic","world cup","award","पद्मविभूषण","पद्मभूषण","पद्मश्री","अर्जुन पुरस्कार","खेलरत्न","साहित्य अकादमी","ज्ञानपीठ","महाराष्ट्र भूषण"],
-        "विज्ञान, तंत्रज्ञान व पर्यावरण": ["इस्रो","isro","चांद्रयान","आदित्य एल","उपग्रह प्रक्षेपण","एआय","क्वांटम","पर्यावरण दिन","हवामान परिषद","cop","गगनयान","मंगळयान","drdo"],
+        "राष्ट्रीय घडामोडी": ["राष्ट्रीय मोहीम","राष्ट्रीय अभियान","केंद्रीय मंत्रिमंडळ","संसद अधिवेशन","नवीन राष्ट्रीय","ऑपरेशन","मिशन","भारतातील पहिले"],
+        "आंतरराष्ट्रीय घडामोडी व करार": ["आंतरराष्ट्रीय करार","संयुक्त राष्ट्र","जी-२०","जी २०","g20","ब्रिक्स","brics","शिखर परिषद","जागतिक परिषद","द्विपक्षीय करार","युनो","नाटो","nato","आसियान","asean"],
+        "महाराष्ट्र शासन व योजना": ["महाराष्ट्र शासन","राज्य शासन","मुख्यमंत्री योजना","लाडकी बहीण","महाराष्ट्र मंत्रिमंडळ","राज्य सरकारची योजना","महाराष्ट्र धोरण"],
+        "अर्थव्यवस्था, अर्थसंकल्प व निर्देशांक": ["निर्देशांक","ग्लोबल इंडेक्स","जागतिक निर्देशांक","आर्थिक पाहणी","विकास निर्देशांक","index","ranking"],
+        "पुरस्कार व क्रीडा": ["पुरस्कार","नोबेल","भारतरत्न","ऑलिम्पिक","क्रिकेट","विश्वचषक","पदक","खेळाडू","क्रीडा","चषक","अवॉर्ड","medal","olympic","world cup","award"],
+        "विज्ञान, तंत्रज्ञान व पर्यावरण": ["इस्रो","isro","चांद्रयान","आदित्य एल","उपग्रह प्रक्षेपण","एआय","क्वांटम","पर्यावरण दिन","हवामान परिषद","cop"],
         "चालू घडामोडी संकीर्ण (Misc)": []
       }
     };
@@ -425,7 +467,7 @@
       "MPSC-199-DEMO1": { code:"MPSC-199-DEMO1",student_id:"STU101",mobile:"",plan:"199_YEARLY",device_id:null,active:true,created_at:"2026-11-25" }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v24";
+    const STATE_KEY = "mpsc_sarav_2026_state_v25_smart";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -443,14 +485,14 @@
       const fallback = {
         activeTab:"dashboard",studentName:"उमेदवार",studentDistrict:"नाशिक",boundStudentId:"",activePasscode:"",isProUnlocked:false,
         adminPasswordHash:btoa("admin123"),isAdminAuthenticated:false,adminTab:"passcodes",
-        supabaseUrl:DEFAULT_SUPABASE_URL,supabaseKey:DEFAULT_SUPABASE_KEY,
+        supabaseUrl:DEFAULT_SUPABASE_URL,supabaseKey:DEFAULT_SUPABASE_KEY,geminiApiKey:"",
         questions:SAMPLE_QUESTIONS,pdfs:DEFAULT_PDFS,githubPdfs:[],githubPdfFilter:"ALL",passcodes:DEFAULT_PASSCODES,
         mistakes:[],bookmarks:[],
         leaderboard:[
           { student_name:"आदित्य देशमुख",district:"पुणे",mode:"डेमो पेपर १: पूर्व परीक्षा (100 प्रश्न)",score:74,total:100,accuracy:78 },
           { student_name:"प्रियांका जाधव",district:"नाशिक",mode:"विषय व घटक (20 प्रश्न)",score:17,total:20,accuracy:85 }
         ],
-        selectedTopicSubject:"चालू घडामोडी",yearFilter:"ALL",qTypeFilter:"ALL"
+        selectedTopicSubject:"राज्यघटना व प्रशासन",yearFilter:"ALL",qTypeFilter:"ALL"
       };
       try {
         const raw = localStorage.getItem(STATE_KEY);
@@ -479,7 +521,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.remove("show"), 4000);
+      window._toastTimer = setTimeout(() => el.classList.remove("show"), 4200);
     }
 
     function copyText(txt, toastMsg) {
@@ -562,7 +604,7 @@
         appState.githubPdfs = pdfs;
         saveState();
         if (appState.activeTab === "pdfs") renderAll();
-        if (forceRefresh) showToast(`GitHub वरून ${pdfs.length} PDFs (प्रश्नपत्रिका व Answer Keys) लोड झाल्या.`);
+        if (forceRefresh) showToast(`GitHub वरून ${pdfs.length} PDFs लोड झाल्या.`);
       } catch (err) {
         if (forceRefresh) showToast("GitHub PDFs लोड करताना अडचण: " + err.message);
       } finally { githubPdfFetchInProgress = false; }
@@ -585,9 +627,11 @@
       return "";
     }
 
-    // 100% Coverage Classifier: Every single question is mapped to one of the 9 valid MPSC subjects
+    // Smart subject & topic matcher without cross-subject Misc pollution
     function classifySubjectAndTopic(q, fallbackIndex = 0) {
-      const qLower = `${q.question_mr || ""} ${(q.options || []).join(" ")}`.toLowerCase();
+      const cleanQ = cleanBrokenMarathiText(q.question_mr || "");
+      const cleanOpts = (q.options || []).map(o => cleanBrokenMarathiText(o));
+      const qLower = `${cleanQ} ${cleanOpts.join(" ")}`.toLowerCase();
       let bestSubj = null, bestTopic = null, bestScore = 0;
 
       for (const sKey of SUBJECT_PRIORITY_ORDER) {
@@ -613,53 +657,102 @@
         return { subject: bestSubj, topic: bestTopic };
       }
 
-      // Check if English-only text -> English subject
-      const latinChars = (q.question_mr || "").replace(/[^a-zA-Z]/g, "").length;
-      const devChars = (q.question_mr || "").replace(/[^\u0900-\u097F]/g, "").length;
+      const latinChars = cleanQ.replace(/[^a-zA-Z]/g, "").length;
+      const devChars = cleanQ.replace(/[^\u0900-\u097F]/g, "").length;
       if (latinChars > 20 && devChars === 0) {
         return { subject: "इंग्रजी व्याकरण व आकलन", topic: SUBJECT_MISC_TOPIC["इंग्रजी व्याकरण व आकलन"] };
       }
 
-      // Check numeric/equation heavy question -> Arithmetic & Reasoning
-      const digitCount = (q.question_mr || "").replace(/[^0-9०-९]/g, "").length;
-      if (digitCount >= 6 && /[+\-×÷=%?]/.test(q.question_mr || "")) {
+      const digitCount = cleanQ.replace(/[^0-9०-९]/g, "").length;
+      if (digitCount >= 6 && /[+\-×÷=%?]/.test(cleanQ)) {
         return { subject: "अंकगणित व बुद्धिमत्ता", topic: SUBJECT_MISC_TOPIC["अंकगणित व बुद्धिमत्ता"] };
       }
 
-      // Preserve valid subject from dataset if present, placed in that subject's Misc topic
       const mappedLegacy = mapLegacySubjectName(q.subject);
       if (mappedLegacy) {
         return { subject: mappedLegacy, topic: SUBJECT_MISC_TOPIC[mappedLegacy] };
       }
 
-      // Final fallback into General Studies subjects so 0 questions are ever dropped or hidden
-      const gsSubjects = ["चालू घडामोडी", "इतिहास", "भूगोल", "राज्यघटना व प्रशासन", "अर्थव्यवस्था", "सामान्य विज्ञान"];
+      const gsSubjects = ["राज्यघटना व प्रशासन", "भूगोल", "अर्थव्यवस्था", "सामान्य विज्ञान", "चालू घडामोडी", "इतिहास"];
       const chosenGs = gsSubjects[fallbackIndex % gsSubjects.length];
       return { subject: chosenGs, topic: SUBJECT_MISC_TOPIC[chosenGs] };
     }
 
     async function reclassifyExistingQuestions() {
       if (!appState.questions.length) return;
-      showToast("सर्व प्रश्नांची अचूक विषय व घटकानुसार विभागणी होत आहे...");
+      showToast("OCR मजकूर व विषय-घटक विभागणी स्मार्ट पद्धतीने स्वच्छ होत आहे...");
       const updated = new Array(appState.questions.length);
       for (let i = 0; i < appState.questions.length; i++) {
         const q = appState.questions[i];
-        const c = classifySubjectAndTopic(q, i);
+        const fixedText = cleanBrokenMarathiText(q.question_mr || "");
+        const fixedOpts = (q.options || []).map(o => cleanBrokenMarathiText(o));
+        const fixedExp = cleanBrokenMarathiText(q.explanation_mr || "");
+        const c = classifySubjectAndTopic({ ...q, question_mr: fixedText, options: fixedOpts }, i);
         let stage = q.exam_stage || "both";
         if (c.subject === "मराठी व्याकरण व आकलन" || c.subject === "इंग्रजी व्याकरण व आकलन") stage = "mains1";
-        updated[i] = { ...q, subject: c.subject, topic: c.topic, exam_stage: stage };
+        updated[i] = { ...q, question_mr: fixedText, options: fixedOpts, explanation_mr: fixedExp, subject: c.subject, topic: c.topic, exam_stage: stage };
       }
       appState.questions = updated;
       renderAll();
       await saveQuestionsChunked(appState.questions);
       saveState();
-      showToast(`पूर्ण! सर्व ${appState.questions.length} प्रश्नांची ९ विषयांत विभागणी झाली.`);
+      showToast(`पूर्ण! सर्व ${appState.questions.length} प्रश्न स्वच्छ व ९ विषयांत विभागले गेले.`);
+    }
+
+    // Optional Gemini API batch audit for selected/Misc questions
+    async function runGeminiSmartAuditOnMisc(batchLimit = 25) {
+      const apiKey = (appState.geminiApiKey || "").trim();
+      if (!apiKey) {
+        showToast("कृपया प्रथम Admin → Cloud & AI मध्ये Gemini API Key सेव्ह करा.");
+        return;
+      }
+      const candidates = [];
+      for (let i = 0; i < appState.questions.length && candidates.length < batchLimit; i++) {
+        const q = appState.questions[i];
+        if ((q.topic || "").includes("(Misc)")) candidates.push({ idx: i, q });
+      }
+      if (!candidates.length) {
+        showToast("Gemini AI ऑडिटसाठी कोणतेही (Misc) प्रश्न शिल्लक नाहीत.");
+        return;
+      }
+
+      showToast(`Gemini AI कडून ${candidates.length} प्रश्नांची तपासणी होत आहे...`);
+      let fixedCount = 0;
+      for (const item of candidates) {
+        try {
+          const prompt = `You are an MPSC Group C exam expert. Clean any broken Marathi OCR text and classify into one exact subject from [${Array.from(VALID_SUBJECT_SET).join(", ")}] and a concise Marathi topic. Reply ONLY in JSON: {"question_mr":"...","options":["..."],"subject":"...","topic":"..."}.\nQuestion: ${item.q.question_mr}\nOptions: ${JSON.stringify(item.q.options)}`;
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const rawOut = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          const jsonMatch = rawOut.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) continue;
+          const parsed = JSON.parse(jsonMatch[0]);
+          const validSubj = VALID_SUBJECT_SET.has(parsed.subject) ? parsed.subject : item.q.subject;
+          appState.questions[item.idx] = {
+            ...item.q,
+            question_mr: cleanBrokenMarathiText(parsed.question_mr || item.q.question_mr),
+            options: Array.isArray(parsed.options) && parsed.options.length >= 2 ? parsed.options.map(cleanBrokenMarathiText) : item.q.options,
+            subject: validSubj,
+            topic: cleanBrokenMarathiText(parsed.topic || item.q.topic)
+          };
+          fixedCount++;
+        } catch (e) {}
+      }
+      renderAll();
+      await saveQuestionsChunked(appState.questions);
+      saveState();
+      showToast(`Gemini AI ने ${fixedCount} / ${candidates.length} प्रश्न अपडेट केले.`);
     }
 
     function normalizeQuestion(raw, idx = 0, forcedType = null) {
-      const qText = raw.question_mr || raw.question || raw.text || "";
-      let opts = raw.options || raw.choices || [raw.option1, raw.option2, raw.option3, raw.option4].filter(Boolean);
-      if (!Array.isArray(opts) || opts.length < 2) opts = ["पर्याय अ", "पर्याय ब", "पर्याय क", "पर्याय ड"];
+      const qText = cleanBrokenMarathiText(raw.question_mr || raw.question || raw.text || "");
+      let rawOpts = raw.options || raw.choices || [raw.option1, raw.option2, raw.option3, raw.option4].filter(Boolean);
+      let opts = Array.isArray(rawOpts) && rawOpts.length >= 2 ? rawOpts.map(cleanBrokenMarathiText) : ["पर्याय अ", "पर्याय ब", "पर्याय क", "पर्याय ड"];
       let ans = Number.isInteger(raw.answer) ? raw.answer : (Number.isInteger(raw.correctIndex) ? raw.correctIndex : 0);
       if (ans < 0 || ans >= opts.length) ans = 0;
       const qType = forcedType || (String(raw.q_type || raw.type || "pyq").toLowerCase().includes("new") ? "new" : "pyq");
@@ -671,7 +764,7 @@
         id: String(raw.id || `${qType.toUpperCase()}-${year}-${idx}`), q_type: qType, year,
         subject: classified.subject, topic: classified.topic, exam_stage: stage,
         question_mr: qText, options: opts, answer: ans,
-        explanation_mr: raw.explanation_mr || raw.explanation || "स्पष्टीकरण लवकरच जोडले जाईल."
+        explanation_mr: cleanBrokenMarathiText(raw.explanation_mr || raw.explanation || "स्पष्टीकरण लवकरच जोडले जाईल.")
       };
     }
 
@@ -736,10 +829,10 @@
       if (!studentId || !code) return { ok: false, msg: "कृपया Student ID आणि Passcode दोन्ही टाका." };
       const cloudRec = await fetchSinglePasscodeFromCloud(code);
       const record = cloudRec || appState.passcodes[code];
-      if (!record) return { ok: false, msg: `Passcode '${code}' सापडला नाही. Admin मधून Cloud Sync तपासा किंवा नवा कोड घ्या.` };
+      if (!record) return { ok: false, msg: `Passcode '${code}' सापडला नाही.` };
       if (record.active === false) return { ok: false, msg: `Passcode '${code}' बंद (Revoked) केला आहे.` };
       if (record.student_id.toUpperCase() !== studentId) return { ok: false, msg: `हा Passcode फक्त '${record.student_id}' या Student ID साठी राखीव आहे.` };
-      if (record.device_id && record.device_id !== CURRENT_DEVICE_ID) return { ok: false, msg: `हा Passcode आधीच दुसऱ्या डिव्हाइसवर (${record.device_id}) लॉक आहे. दुसऱ्या डिव्हाइसवर वापरता येणार नाही.` };
+      if (record.device_id && record.device_id !== CURRENT_DEVICE_ID) return { ok: false, msg: `हा Passcode आधीच दुसऱ्या डिव्हाइसवर (${record.device_id}) लॉक आहे.` };
       if (!record.device_id) record.device_id = CURRENT_DEVICE_ID;
       appState.passcodes[code] = record;
       appState.boundStudentId = studentId;
@@ -867,7 +960,7 @@
           renderAll();
           await saveQuestionsChunked(appState.questions);
           saveState();
-          if (!silent) showToast(`क्लाउडवरून ${appState.questions.length} प्रश्न सेव्ह झाले.`);
+          if (!silent) showToast(`क्लाउडवरून ${appState.questions.length} प्रश्न स्वच्छ व लोड झाले.`);
           return true;
         }
         if (!silent) showToast("क्लाउडवर अजून प्रश्न नाहीत.");
@@ -1176,7 +1269,7 @@
     function renderDashboard() {
       let pyqCount = 0, newCount = 0;
       for (let i = 0; i < appState.questions.length; i++) appState.questions[i].q_type === "new" ? newCount++ : pyqCount++;
-      return `<div class="card" style="background:linear-gradient(125deg,#eff6ff 0%,#f0fdfa 100%);border-color:#bfdbfe;"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;"><div><span class="badge badge-blue">MPSC गट-क (Group C) • 2026-27</span><h1 class="card-title" style="font-size:22px;margin-top:6px;">१-१ डेमो पेपर्स (पॅटर्ननुसार), पूर्व १०० गुण, मुख्य परीक्षा व घटकनिहाय २० प्रश्न</h1><p class="card-sub" style="margin-bottom:0;">Pro प्लॅन <strong>₹199/वर्ष</strong> (१ पासकोड = १ Student ID + १ Device Lock) • पेमेंट किंवा कोणत्याही Query/Inquiry साठी थेट <strong>WhatsApp 8554011484</strong> वर संपर्क.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="startExamByKey('demo_pre')">▶ पूर्व डेमो पेपर (100 प्रश्न)</button><button class="btn btn-wa" onclick="openWhatsAppInquiry()">💬 WhatsApp 8554011484</button></div></div></div><div class="grid-4"><div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक (100% Mapped)</div></div><div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div><div class="stat-box"><div class="stat-num" style="color:var(--amber);">9 विषय / Full Bank</div><div class="stat-lbl">सर्व ${appState.questions.length} प्रश्न ९ विषयांत</div></div><div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div></div><div class="card" style="margin-top:14px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🧪 १-१ डेमो पेपर्स (MPSC गट-क पॅटर्ननुसार)</h2><div style="font-size:12px;color:var(--muted);">आधी डेमो पेपर्स तपासा; पूर्ण प्रवेशासाठी ₹199/वर्ष Passcode सक्रिय करा.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><select class="select" onchange="appState.qTypeFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.qTypeFilter==="ALL"?"selected":""}>सर्व प्रश्न (PYQ + नवीन)</option><option value="pyq" ${appState.qTypeFilter==="pyq"?"selected":""}>फक्त PYQ प्रश्न</option><option value="new" ${appState.qTypeFilter==="new"?"selected":""}>फक्त नवीन प्रश्न</option></select><select class="select" onchange="appState.yearFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.yearFilter==="ALL"?"selected":""}>सर्व वर्षे</option>${[2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015].map(y => `<option value="${y}" ${String(appState.yearFilter)===String(y)?"selected":""}>${y}</option>`).join("")}</select></div></div><div class="grid-3"><div class="topic-card"><div><span class="badge badge-blue">डेमो पेपर १ • पूर्व परीक्षा</span><h3 style="margin:6px 0 4px;font-size:15px;">पूर्व परीक्षा डेमो (100 प्रश्न • 60 मि.)</h3><div style="font-size:12px;color:var(--muted);">7 विषय भारांश, +1 गुण व -0.25 निगेटिव्ह मार्किंग पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-primary btn-sm" onclick="startExamByKey('demo_pre')">पूर्व डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-amber">डेमो पेपर २ • मुख्य Paper 1</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 1 डेमो (मराठी व इंग्रजी)</h3><div style="font-size:12px;color:var(--muted);">मराठी व्याकरण-आकलन व इंग्रजी व्याकरण-शब्दसंग्रह पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-amber btn-sm" onclick="startExamByKey('demo_mains1')">Paper 1 डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-teal">डेमो पेपर ३ • मुख्य Paper 2</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 2 डेमो (सामान्य ज्ञान व विषय)</h3><div style="font-size:12px;color:var(--muted);">इतिहास, भूगोल, राज्यघटना, अर्थव्यवस्था, विज्ञान, चालू घडामोडी व RTI/RTS डेमो पेपर.</div></div><button class="btn btn-accent btn-sm" onclick="startExamByKey('demo_mains2')">Paper 2 डेमो सुरू करा</button></div></div></div>`;
+      return `<div class="card" style="background:linear-gradient(125deg,#eff6ff 0%,#f0fdfa 100%);border-color:#bfdbfe;"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;"><div><span class="badge badge-blue">MPSC गट-क (Group C) • 2026-27 • Smart OCR & Classifier</span><h1 class="card-title" style="font-size:22px;margin-top:6px;">१-१ डेमो पेपर्स (पॅटर्ननुसार), पूर्व १०० गुण, मुख्य परीक्षा व घटकनिहाय २० प्रश्न</h1><p class="card-sub" style="margin-bottom:0;">Pro प्लॅन <strong>₹199/वर्ष</strong> (१ पासकोड = १ Student ID + १ Device Lock) • पेमेंट किंवा कोणत्याही Query/Inquiry साठी थेट <strong>WhatsApp 8554011484</strong> वर संपर्क.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="startExamByKey('demo_pre')">▶ पूर्व डेमो पेपर (100 प्रश्न)</button><button class="btn btn-wa" onclick="openWhatsAppInquiry()">💬 WhatsApp 8554011484</button></div></div></div><div class="grid-4"><div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक (Smart Cleaned)</div></div><div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div><div class="stat-box"><div class="stat-num" style="color:var(--amber);">9 विषय / Strict Topic</div><div class="stat-lbl">अचूक विषय व घटक विभागणी</div></div><div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div></div><div class="card" style="margin-top:14px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🧪 १-१ डेमो पेपर्स (MPSC गट-क पॅटर्ननुसार)</h2><div style="font-size:12px;color:var(--muted);">आधी डेमो पेपर्स तपासा; पूर्ण प्रवेशासाठी ₹199/वर्ष Passcode सक्रिय करा.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><select class="select" onchange="appState.qTypeFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.qTypeFilter==="ALL"?"selected":""}>सर्व प्रश्न (PYQ + नवीन)</option><option value="pyq" ${appState.qTypeFilter==="pyq"?"selected":""}>फक्त PYQ प्रश्न</option><option value="new" ${appState.qTypeFilter==="new"?"selected":""}>फक्त नवीन प्रश्न</option></select><select class="select" onchange="appState.yearFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.yearFilter==="ALL"?"selected":""}>सर्व वर्षे</option>${[2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015].map(y => `<option value="${y}" ${String(appState.yearFilter)===String(y)?"selected":""}>${y}</option>`).join("")}</select></div></div><div class="grid-3"><div class="topic-card"><div><span class="badge badge-blue">डेमो पेपर १ • पूर्व परीक्षा</span><h3 style="margin:6px 0 4px;font-size:15px;">पूर्व परीक्षा डेमो (100 प्रश्न • 60 मि.)</h3><div style="font-size:12px;color:var(--muted);">7 विषय भारांश, +1 गुण व -0.25 निगेटिव्ह मार्किंग पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-primary btn-sm" onclick="startExamByKey('demo_pre')">पूर्व डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-amber">डेमो पेपर २ • मुख्य Paper 1</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 1 डेमो (मराठी व इंग्रजी)</h3><div style="font-size:12px;color:var(--muted);">मराठी व्याकरण-आकलन व इंग्रजी व्याकरण-शब्दसंग्रह पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-amber btn-sm" onclick="startExamByKey('demo_mains1')">Paper 1 डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-teal">डेमो पेपर ३ • मुख्य Paper 2</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 2 डेमो (सामान्य ज्ञान व विषय)</h3><div style="font-size:12px;color:var(--muted);">इतिहास, भूगोल, राज्यघटना, अर्थव्यवस्था, विज्ञान, चालू घडामोडी व RTI/RTS डेमो पेपर.</div></div><button class="btn btn-accent btn-sm" onclick="startExamByKey('demo_mains2')">Paper 2 डेमो सुरू करा</button></div></div></div>`;
     }
 
     function renderPreExamTab() {
@@ -1204,7 +1297,7 @@
 
       const allMappedTotal = Object.values(subjectTotals).reduce((a, b) => a + b, 0);
 
-      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🎯 विषयनिहाय व घटकनिहाय 20 प्रश्नांची चाचणी (एकूण: ${allMappedTotal} प्रश्न)</h2><p class="card-sub" style="margin-bottom:0;">सर्व <strong>${allMappedTotal}</strong> प्रश्न ९ विषयांमध्ये अचूक विभागले आहेत; प्रत्येक घटकात फक्त त्याच घटकाचे प्रश्न येतील.</p></div>${appState.isAdminAuthenticated ? `<button class="btn btn-sm btn-accent" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा अचूक वर्गवारी करा</button>` : ""}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">${MPSC_SUBJECTS.map(s => `<button class="btn btn-sm ${s.key === selectedSubj ? "btn-primary" : ""}" onclick="selectTopicSubject('${encodeURIComponent(s.key)}')">${s.key} (${subjectTotals[s.key] || 0})</button>`).join("")}</div><div class="grid-3">${topicNames.map(tName => { const cnt = topicCounts[tName] || 0, testSize = Math.min(20, cnt); return `<div class="topic-card"><div><span class="badge badge-blue">${selectedSubj}</span><h3 style="margin:6px 0 4px;font-size:15px;">${tName}</h3><div style="font-size:12px;color:var(--muted);">अचूक प्रश्न उपलब्ध: <strong>${cnt}</strong> • चाचणी प्रश्न: ${testSize}</div></div><button class="btn btn-primary btn-sm" ${cnt === 0 ? "disabled" : ""} onclick="startExamByKey('topic20', '${encodeURIComponent(selectedSubj)}||' + '${encodeURIComponent(tName)}')">${cnt > 0 ? `${testSize} प्रश्नांची टेस्ट सुरू करा` : "या घटकाचे प्रश्न उपलब्ध नाहीत"}</button></div>`; }).join("")}</div></div>`;
+      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🎯 विषयनिहाय व घटकनिहाय 20 प्रश्नांची चाचणी (एकूण: ${allMappedTotal} प्रश्न)</h2><p class="card-sub" style="margin-bottom:0;">तुटलेली अक्षरे स्मार्ट पद्धतीने स्वच्छ करून सर्व <strong>${allMappedTotal}</strong> प्रश्न ९ विषयांमध्ये अचूक विभागले आहेत.</p></div>${appState.isAdminAuthenticated ? `<button class="btn btn-sm btn-accent" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा स्मार्ट स्वच्छ व वर्गवारी करा</button>` : ""}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">${MPSC_SUBJECTS.map(s => `<button class="btn btn-sm ${s.key === selectedSubj ? "btn-primary" : ""}" onclick="selectTopicSubject('${encodeURIComponent(s.key)}')">${s.key} (${subjectTotals[s.key] || 0})</button>`).join("")}</div><div class="grid-3">${topicNames.map(tName => { const cnt = topicCounts[tName] || 0, testSize = Math.min(20, cnt); return `<div class="topic-card"><div><span class="badge badge-blue">${selectedSubj}</span><h3 style="margin:6px 0 4px;font-size:15px;">${tName}</h3><div style="font-size:12px;color:var(--muted);">अचूक प्रश्न उपलब्ध: <strong>${cnt}</strong> • चाचणी प्रश्न: ${testSize}</div></div><button class="btn btn-primary btn-sm" ${cnt === 0 ? "disabled" : ""} onclick="startExamByKey('topic20', '${encodeURIComponent(selectedSubj)}||' + '${encodeURIComponent(tName)}')">${cnt > 0 ? `${testSize} प्रश्नांची टेस्ट सुरू करा` : "या घटकाचे प्रश्न उपलब्ध नाहीत"}</button></div>`; }).join("")}</div></div>`;
     }
 
     function selectTopicSubject(encodedKey) { appState.selectedTopicSubject = decodeURIComponent(encodedKey); saveState(); renderAll(); }
@@ -1229,10 +1322,17 @@
     function renderAdminTab() {
       if (!appState.isAdminAuthenticated) return `<div class="card"><p>कृपया प्रथम Admin लॉगिन करा.</p><button class="btn btn-primary" onclick="openAdminGate()">Admin Login</button></div>`;
       const aTab = appState.adminTab || "passcodes", passList = Object.values(appState.passcodes);
-      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;"><div><span class="badge badge-rose">ADMIN PORTAL</span><h2 class="card-title" style="margin-top:4px;">प्रशासन डॅशबोर्ड — MPSC Sarav 2026-27</h2></div><button class="btn btn-sm" onclick="appState.isAdminAuthenticated=false;appState.activeTab='dashboard';saveState();renderAll();">लॉगआउट</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"><button class="btn btn-sm ${aTab==='passcodes'?'btn-primary':''}" onclick="appState.adminTab='passcodes';renderAll();">🔐 Passcodes & 1-Device Lock</button><button class="btn btn-sm ${aTab==='json'?'btn-primary':''}" onclick="appState.adminTab='json';renderAll();">📥 JSON & GitHub Loader</button><button class="btn btn-sm ${aTab==='pdfs'?'btn-primary':''}" onclick="appState.adminTab='pdfs';renderAll();">📄 Paper PDFs</button><button class="btn btn-sm ${aTab==='cloud'?'btn-primary':''}" onclick="appState.adminTab='cloud';renderAll();">☁️ Cloud & Admin Password</button></div>${aTab === "passcodes" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3><div class="grid-4" style="margin-bottom:8px;"><input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. MAYURI2000)" /><input id="newPassMobile" name="newPassMobile" class="input" placeholder="विद्यार्थी मोबाइल (पर्यायी)" /><input id="newPassCode" name="newPassCode" class="input" placeholder="Passcode (रिकामे सोडल्यास ऑटो तयार होईल)" /><button class="btn btn-primary" onclick="createSingleDevicePasscode()">+ Passcode तयार करा</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" onclick="exportPasscodesJson()">💾 Passcodes JSON डाउनलोड करा</button><button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes घ्या</button><button class="btn btn-sm btn-primary" onclick="syncAllPasscodesToCloud()">⬆ सर्व Passcodes Cloud वर पाठवा</button></div></div><table><thead><tr><th>Passcode</th><th>Student ID</th><th>मोबाइल</th><th>Locked Device ID</th><th>स्थिती</th><th>पाठवा व क्रिया</th></tr></thead><tbody>${passList.map(p => `<tr><td><strong>${p.code}</strong></td><td>${p.student_id}</td><td>${p.mobile || "-"}</td><td><code>${p.device_id || "अद्याप लॉक नाही"}</code></td><td><span class="badge ${p.active ? "badge-green" : "badge-rose"}">${p.active ? "ACTIVE" : "REVOKED"}</span></td><td style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-wa btn-sm" onclick="sendPasscodeWhatsApp('${p.code}')">💬 WhatsApp</button><button class="btn btn-accent btn-sm" onclick="sendPasscodeSms('${p.code}')">✉️ Text SMS</button><button class="btn btn-sm" onclick="copyText('Student ID: ${p.student_id} | Passcode: ${p.code}', 'Passcode तपशील कॉपी केले')">कॉपी</button><button class="btn btn-sm" onclick="resetPasscodeDevice('${p.code}')">Device Reset</button><button class="btn btn-sm" onclick="togglePasscodeActive('${p.code}')">${p.active ? "Revoke" : "Activate"}</button></td></tr>`).join("")}</tbody></table>` : ""}${aTab === "json" ? `<div class="grid-2" style="margin-bottom:14px;"><div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">PYQ JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'pyq')" /></div><div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">नवीन प्रश्न JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'new')" /></div></div><div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 6px;font-size:15px;">GitHub वरून थेट JSON URL लोड करा</h3><div class="grid-2"><input id="githubJsonUrlInput" name="githubJsonUrlInput" class="input" placeholder="https://raw.githubusercontent.com/.../questions.json" /><button class="btn btn-accent" onclick="loadJsonFromGithubUrl(document.getElementById('githubJsonUrlInput').value, null)">GitHub वरून लोड करा</button></div></div><div class="stat-box" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा विषय व घटकानुसार वेगळे करा</button><button class="btn btn-sm btn-rose" onclick="resetSavedQuestions()">↺ ब्राउझरमधील सेव्ह प्रश्न साफ करून 10 सॅम्पल ठेवा</button></div>` : ""}${aTab === "pdfs" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;">नवीन Paper PDF जोडा</h3><div class="grid-2" style="margin-bottom:8px;"><input id="pdfTitleInput" name="pdfTitleInput" class="input" placeholder="पेपरचे नाव" /><input id="pdfYearInput" name="pdfYearInput" class="input" placeholder="वर्ष (उदा. 2025)" /><select id="pdfAccessInput" name="pdfAccessInput" class="select"><option value="free">Free</option><option value="pro">Pro (₹199/yr)</option></select><input id="pdfUrlInput" name="pdfUrlInput" class="input" placeholder="PDF / Google Drive / GitHub लिंक" /></div><button class="btn btn-primary btn-sm" onclick="addPdfEntry()">+ PDF सेव्ह करा</button></div><table><thead><tr><th>शीर्षक</th><th>वर्ष</th><th>प्रकार</th><th>लिंक</th><th>क्रिया</th></tr></thead><tbody>${appState.pdfs.map(pdf => `<tr><td><strong>${pdf.title}</strong></td><td>${pdf.year}</td><td>${pdf.access_type === "pro" ? "PRO" : "FREE"}</td><td><a href="${pdf.file_url}" target="_blank" rel="noopener">उघडा</a></td><td><button class="btn btn-sm btn-rose" onclick="deletePdfEntry('${pdf.id}')">काढा</button></td></tr>`).join("")}</tbody></table>` : ""}${aTab === "cloud" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync (Max 25,000)</h3><div class="grid-2" style="margin-bottom:8px;"><input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" /><input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" /></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="saveSupabaseConfig()">सेव्ह करा</button><button class="btn btn-sm btn-accent" onclick="syncQuestionsToCloud()">⬆ प्रश्न Cloud वर Sync करा</button><button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (25,000 मर्यादा)</button></div></div><div class="stat-box"><h3 style="margin:0 0 8px;font-size:15px;">Admin पासवर्ड बदला</h3><div class="grid-3"><input type="password" id="newAdminPass1" name="newAdminPass1" class="input" placeholder="नवीन Admin पासवर्ड" /><input type="password" id="newAdminPass2" name="newAdminPass2" class="input" placeholder="नवीन पासवर्ड पुन्हा टाका" /><button class="btn btn-amber" onclick="changeAdminPassword()">पासवर्ड बदला</button></div></div>` : ""}</div>`;
+      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;"><div><span class="badge badge-rose">ADMIN PORTAL</span><h2 class="card-title" style="margin-top:4px;">प्रशासन डॅशबोर्ड — MPSC Sarav 2026-27</h2></div><button class="btn btn-sm" onclick="appState.isAdminAuthenticated=false;appState.activeTab='dashboard';saveState();renderAll();">लॉगआउट</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"><button class="btn btn-sm ${aTab==='passcodes'?'btn-primary':''}" onclick="appState.adminTab='passcodes';renderAll();">🔐 Passcodes & 1-Device Lock</button><button class="btn btn-sm ${aTab==='json'?'btn-primary':''}" onclick="appState.adminTab='json';renderAll();">📥 JSON & GitHub Loader</button><button class="btn btn-sm ${aTab==='pdfs'?'btn-primary':''}" onclick="appState.adminTab='pdfs';renderAll();">📄 Paper PDFs</button><button class="btn btn-sm ${aTab==='cloud'?'btn-primary':''}" onclick="appState.adminTab='cloud';renderAll();">☁️ Cloud & AI</button></div>${aTab === "passcodes" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3><div class="grid-4" style="margin-bottom:8px;"><input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. MAYURI2000)" /><input id="newPassMobile" name="newPassMobile" class="input" placeholder="विद्यार्थी मोबाइल (पर्यायी)" /><input id="newPassCode" name="newPassCode" class="input" placeholder="Passcode (रिकामे सोडल्यास ऑटो तयार होईल)" /><button class="btn btn-primary" onclick="createSingleDevicePasscode()">+ Passcode तयार करा</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" onclick="exportPasscodesJson()">💾 Passcodes JSON डाउनलोड करा</button><button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes घ्या</button><button class="btn btn-sm btn-primary" onclick="syncAllPasscodesToCloud()">⬆ सर्व Passcodes Cloud वर पाठवा</button></div></div><table><thead><tr><th>Passcode</th><th>Student ID</th><th>मोबाइल</th><th>Locked Device ID</th><th>स्थिती</th><th>पाठवा व क्रिया</th></tr></thead><tbody>${passList.map(p => `<tr><td><strong>${p.code}</strong></td><td>${p.student_id}</td><td>${p.mobile || "-"}</td><td><code>${p.device_id || "अद्याप लॉक नाही"}</code></td><td><span class="badge ${p.active ? "badge-green" : "badge-rose"}">${p.active ? "ACTIVE" : "REVOKED"}</span></td><td style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-wa btn-sm" onclick="sendPasscodeWhatsApp('${p.code}')">💬 WhatsApp</button><button class="btn btn-accent btn-sm" onclick="sendPasscodeSms('${p.code}')">✉️ Text SMS</button><button class="btn btn-sm" onclick="copyText('Student ID: ${p.student_id} | Passcode: ${p.code}', 'Passcode तपशील कॉपी केले')">कॉपी</button><button class="btn btn-sm" onclick="resetPasscodeDevice('${p.code}')">Device Reset</button><button class="btn btn-sm" onclick="togglePasscodeActive('${p.code}')">${p.active ? "Revoke" : "Activate"}</button></td></tr>`).join("")}</tbody></table>` : ""}${aTab === "json" ? `<div class="grid-2" style="margin-bottom:14px;"><div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">PYQ JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'pyq')" /></div><div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">नवीन प्रश्न JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'new')" /></div></div><div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 6px;font-size:15px;">GitHub वरून थेट JSON URL लोड करा</h3><div class="grid-2"><input id="githubJsonUrlInput" name="githubJsonUrlInput" class="input" placeholder="https://raw.githubusercontent.com/.../questions.json" /><button class="btn btn-accent" onclick="loadJsonFromGithubUrl(document.getElementById('githubJsonUrlInput').value, null)">GitHub वरून लोड करा</button></div></div><div class="stat-box" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा स्मार्ट स्वच्छ व वर्गवारी करा</button><button class="btn btn-sm btn-accent" onclick="runGeminiSmartAuditOnMisc(25)">✨ Gemini AI ने 25 Misc प्रश्न तपासा</button><button class="btn btn-sm btn-rose" onclick="resetSavedQuestions()">↺ ब्राउझरमधील सेव्ह प्रश्न साफ करून 10 सॅम्पल ठेवा</button></div>` : ""}${aTab === "pdfs" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;">नवीन Paper PDF जोडा</h3><div class="grid-2" style="margin-bottom:8px;"><input id="pdfTitleInput" name="pdfTitleInput" class="input" placeholder="पेपरचे नाव" /><input id="pdfYearInput" name="pdfYearInput" class="input" placeholder="वर्ष (उदा. 2025)" /><select id="pdfAccessInput" name="pdfAccessInput" class="select"><option value="free">Free</option><option value="pro">Pro (₹199/yr)</option></select><input id="pdfUrlInput" name="pdfUrlInput" class="input" placeholder="PDF / Google Drive / GitHub लिंक" /></div><button class="btn btn-primary btn-sm" onclick="addPdfEntry()">+ PDF सेव्ह करा</button></div><table><thead><tr><th>शीर्षक</th><th>वर्ष</th><th>प्रकार</th><th>लिंक</th><th>क्रिया</th></tr></thead><tbody>${appState.pdfs.map(pdf => `<tr><td><strong>${pdf.title}</strong></td><td>${pdf.year}</td><td>${pdf.access_type === "pro" ? "PRO" : "FREE"}</td><td><a href="${pdf.file_url}" target="_blank" rel="noopener">उघडा</a></td><td><button class="btn btn-sm btn-rose" onclick="deletePdfEntry('${pdf.id}')">काढा</button></td></tr>`).join("")}</tbody></table>` : ""}${aTab === "cloud" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync & Gemini AI Key</h3><div class="grid-2" style="margin-bottom:8px;"><input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" /><input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" /></div><div style="margin-bottom:8px;"><input type="password" id="geminiApiKeyInput" name="geminiApiKeyInput" class="input" style="width:100%;" value="${appState.geminiApiKey || ""}" placeholder="Gemini API Key (पर्यायी — Smart AI Audit साठी)" /></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="saveSupabaseConfig()">सेव्ह करा</button><button class="btn btn-sm btn-accent" onclick="syncQuestionsToCloud()">⬆ प्रश्न Cloud वर Sync करा</button><button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (25,000 मर्यादा)</button></div></div><div class="stat-box"><h3 style="margin:0 0 8px;font-size:15px;">Admin पासवर्ड बदला</h3><div class="grid-3"><input type="password" id="newAdminPass1" name="newAdminPass1" class="input" placeholder="नवीन Admin पासवर्ड" /><input type="password" id="newAdminPass2" name="newAdminPass2" class="input" placeholder="नवीन पासवर्ड पुन्हा टाका" /><button class="btn btn-amber" onclick="changeAdminPassword()">पासवर्ड बदला</button></div></div>` : ""}</div>`;
     }
 
-    function saveSupabaseConfig() { appState.supabaseUrl = document.getElementById("sbUrlInput").value.trim(); appState.supabaseKey = document.getElementById("sbKeyInput").value.trim(); saveState(); checkCloudConnection(); showToast("Supabase सेटिंग्ज सेव्ह केली."); }
+    function saveSupabaseConfig() {
+      appState.supabaseUrl = document.getElementById("sbUrlInput").value.trim();
+      appState.supabaseKey = document.getElementById("sbKeyInput").value.trim();
+      if (document.getElementById("geminiApiKeyInput")) {
+        appState.geminiApiKey = document.getElementById("geminiApiKeyInput").value.trim();
+      }
+      saveState(); checkCloudConnection(); showToast("Supabase व AI सेटिंग्ज सेव्ह केली.");
+    }
 
     function renderAll() {
       renderTopAndProfile();
