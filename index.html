@@ -216,6 +216,19 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="pdfViewerModal">
+    <div class="modal-card" style="max-width:980px;height:88vh;display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <strong id="pdfViewerTitle" style="font-size:15px;">PDF Viewer</strong>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a id="pdfViewerExternal" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm">नवीन टॅबमध्ये उघडा</a>
+          <button class="btn btn-sm" onclick="closeModal('pdfViewerModal')">✕</button>
+        </div>
+      </div>
+      <iframe id="pdfViewerFrame" src="" style="flex:1;width:100%;border:1px solid var(--line);border-radius:10px;background:#f8fafc;" title="PDF Preview"></iframe>
+    </div>
+  </div>
+
   <div class="toast" id="toastBox"></div>
 
   <script>
@@ -500,10 +513,7 @@
       { id:"Q-1010",q_type:"new",year:2026,subject:"राज्यघटना व प्रशासन",topic:"RTI, RTS व लोकसेवा हक्क",exam_stage:"mains2",question_mr:"माहितीचा अधिकार अधिनियम (RTI Act) कोणत्या वर्षी संमत झाला?",options:["२००२","२००५","२००९","२०१२"],answer:1,explanation_mr:"माहितीचा अधिकार अधिनियम २००५ मध्ये संमत झाला." }
     ];
 
-    const DEFAULT_PDFS = [
-      { id:"PDF-1",title:"MPSC गट-क संयुक्त पूर्व परीक्षा (PYQ संच)",year:"2024",access_type:"free",file_url:"https://www.mpsc.gov.in" },
-      { id:"PDF-2",title:"MPSC गट-क मुख्य परीक्षा पेपर १ व २ सराव संच",year:"2025",access_type:"pro",file_url:"https://www.mpsc.gov.in" }
-    ];
+    const DEFAULT_PDFS = [];
 
     const DEFAULT_PASSCODES = {
       "MPSC-199-DEMO1": { code:"MPSC-199-DEMO1",student_id:"STU101",mobile:"",plan:"199_YEARLY",device_id:null,active:true,created_at:"2026-11-25" }
@@ -542,7 +552,7 @@
         const parsed = JSON.parse(raw);
         return {
           ...fallback,...parsed,questions:SAMPLE_QUESTIONS,
-          pdfs:Array.isArray(parsed.pdfs)&&parsed.pdfs.length?parsed.pdfs:DEFAULT_PDFS,
+          pdfs:Array.isArray(parsed.pdfs)?parsed.pdfs:DEFAULT_PDFS,
           githubPdfs:Array.isArray(parsed.githubPdfs)?parsed.githubPdfs:[],
           passcodes:parsed.passcodes&&Object.keys(parsed.passcodes).length?{...DEFAULT_PASSCODES,...parsed.passcodes}:DEFAULT_PASSCODES
         };
@@ -610,12 +620,68 @@
     }
 
     function openModal(id) { document.getElementById(id).classList.add("open"); }
-    function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+      if (id === "pdfViewerModal") {
+        const frame = document.getElementById("pdfViewerFrame");
+        if (frame) frame.src = "";
+      }
+    }
     function openProModal() {
       document.getElementById("modalStudentId").value = appState.boundStudentId || "";
       document.getElementById("paymentStudentId").value = appState.boundStudentId || "";
       document.getElementById("modalPasscode").value = appState.activePasscode || "";
       openModal("proModal");
+    }
+
+    function toRawPdfUrl(url) {
+      const u = String(url || "");
+      return u
+        .replace("://github.com/", "://raw.githubusercontent.com/")
+        .replace("/blob/", "/");
+    }
+
+    function openPdfInPortal(title, url) {
+      const modal = document.getElementById("pdfViewerModal");
+      const frame = document.getElementById("pdfViewerFrame");
+      const ext = document.getElementById("pdfViewerExternal");
+      const ttl = document.getElementById("pdfViewerTitle");
+      if (!modal || !frame) {
+        window.open(url, "_blank", "noopener");
+        return;
+      }
+      ttl.textContent = title || "PDF";
+      ext.href = url;
+      frame.src = toRawPdfUrl(url);
+      modal.classList.add("open");
+    }
+
+    function extractMatchKey(text) {
+      const s = String(text || "").toLowerCase();
+      const codeMatch = s.match(/\b(\d{2,4}[-_]\d{4})\b/);
+      const paperMatch = s.match(/(paper\s*[-_.]?\s*\d+|पेपर\s*[-_.]?\s*[१२३123])/i);
+      const yearMatch = s.match(/\b(201\d|202\d)\b/) || s.match(/(२०१\d|२०२\d)/);
+      return {
+        code: codeMatch ? codeMatch[1] : "",
+        paper: paperMatch ? paperMatch[0].replace(/\s+/g, "") : "",
+        year: yearMatch ? yearMatch[0] : ""
+      };
+    }
+
+    function findMatchingAnswerKey(qItem, allAnswers) {
+      const qKey = extractMatchKey(`${qItem.fileName || ""} ${qItem.title || ""}`);
+      if (qKey.code) {
+        const byCode = allAnswers.find(a => extractMatchKey(`${a.fileName || ""} ${a.title || ""}`).code === qKey.code);
+        if (byCode) return byCode;
+      }
+      if (qKey.year && qKey.paper) {
+        const byYearPaper = allAnswers.find(a => {
+          const ak = extractMatchKey(`${a.fileName || ""} ${a.title || ""}`);
+          return ak.year === qKey.year && ak.paper === qKey.paper;
+        });
+        if (byYearPaper) return byYearPaper;
+      }
+      return null;
     }
 
     function buildPdfItemFromName(rawName, idx = 0, extra = {}) {
@@ -1385,9 +1451,79 @@
 
     function renderPdfsTab() {
       const ghAll = Array.isArray(appState.githubPdfs) ? appState.githubPdfs : [];
-      const ghFiltered = ghAll.filter(item => appState.githubPdfFilter === "question" ? item.kind === "question" : (appState.githubPdfFilter === "answer" ? item.kind === "answer" : true));
-      const qCount = ghAll.filter(i => i.kind === "question").length, aCount = ghAll.filter(i => i.kind === "answer").length;
-      return `<div class="card"><h2 class="card-title">📄 PYQ प्रश्नपत्रिका व Answer Key PDFs</h2><p class="card-sub">Free पेपर्स सर्वांसाठी खुले आहेत; Pro PDFs साठी ₹199/वर्ष Passcode आवश्यक आहे.</p><div class="grid-2">${appState.pdfs.map(pdf => { const locked = pdf.access_type === "pro" && !appState.isProUnlocked; return `<div class="topic-card"><div><span class="badge ${pdf.access_type === "pro" ? "badge-amber" : "badge-green"}">${pdf.access_type === "pro" ? "PRO ₹199/yr" : "FREE"}</span> <span class="badge badge-blue">${pdf.year}</span><h3 style="margin:6px 0 4px;font-size:15px;">${pdf.title}</h3></div>${locked ? `<button class="btn btn-amber btn-sm" onclick="openProModal()">🔒 Pro Passcode सक्रिय करा</button>` : `<a class="btn btn-primary btn-sm" href="${pdf.file_url}" target="_blank" rel="noopener">📥 PDF उघडा / डाउनलोड करा</a>`}</div>`; }).join("")}</div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;"><div><span class="badge badge-teal">GitHub Auto-Sync (${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME})</span><h3 class="card-title" style="margin-top:4px;">📚 GitHub वरील सर्व प्रश्नपत्रिका (${qCount}) व Answer Keys (${aCount})</h3></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm ${appState.githubPdfFilter==='ALL'?'btn-primary':''}" onclick="appState.githubPdfFilter='ALL';saveState();renderAll();">सर्व (${ghAll.length})</button><button class="btn btn-sm ${appState.githubPdfFilter==='question'?'btn-primary':''}" onclick="appState.githubPdfFilter='question';saveState();renderAll();">प्रश्नपत्रिका (${qCount})</button><button class="btn btn-sm ${appState.githubPdfFilter==='answer'?'btn-primary':''}" onclick="appState.githubPdfFilter='answer';saveState();renderAll();">Answer Keys (${aCount})</button><button class="btn btn-sm btn-accent" onclick="loadPortalPdfCatalog(true)">🔄 यादी रिफ्रेश करा</button></div></div>${ghFiltered.length ? `<div class="grid-2">${ghFiltered.map(pdf => `<div class="topic-card"><div><span class="badge ${pdf.kind === "answer" ? "badge-green" : "badge-blue"}">${pdf.kind === "answer" ? "✅ ANSWER KEY" : "📝 QUESTION PAPER"}</span> <span class="badge badge-amber">${pdf.year}</span><h4 style="margin:6px 0 4px;font-size:14px;">${pdf.title}</h4></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><a class="btn btn-primary btn-sm" href="${pdf.file_url}" target="_blank" rel="noopener">👁️ ${pdf.kind === "answer" ? "Answer Key पहा" : "प्रश्नपत्रिका पहा"}</a>${pdf.download_url ? `<a class="btn btn-sm" href="${pdf.download_url}" target="_blank" rel="noopener" download="${pdf.fileName || (pdf.title + '.pdf')}">⬇ डाउनलोड</a>` : ""}</div></div>`).join("")}</div>` : `<p style="font-size:13px;color:var(--muted);">GitHub रिपॉझिटरीमधील PDFs लोड होत आहेत किंवा <strong>🔄 यादी रिफ्रेश करा</strong> दाबा.</p>`}</div>`;
+      const questionsList = ghAll.filter(i => i.kind !== "answer");
+      const answersList = ghAll.filter(i => i.kind === "answer");
+      const listToShow = appState.githubPdfFilter === "answer"
+        ? answersList
+        : (appState.githubPdfFilter === "question" ? questionsList : ghAll);
+
+      return `
+        ${appState.pdfs.length ? `
+          <div class="card">
+            <h2 class="card-title">📄 निवडक PYQ प्रश्नपत्रिका व Answer Key PDFs</h2>
+            <p class="card-sub">Free पेपर्स सर्वांसाठी खुले आहेत; Pro PDFs साठी ₹199/वर्ष Passcode आवश्यक आहे.</p>
+            <div class="grid-2">
+              ${appState.pdfs.map(pdf => {
+                const locked = pdf.access_type === "pro" && !appState.isProUnlocked;
+                const safeTitle = (pdf.title || "PDF").replace(/'/g, "\\'");
+                const safeUrl = (pdf.file_url || "").replace(/'/g, "\\'");
+                return `
+                  <div class="topic-card">
+                    <div>
+                      <span class="badge ${pdf.access_type === "pro" ? "badge-amber" : "badge-green"}">${pdf.access_type === "pro" ? "PRO ₹199/yr" : "FREE"}</span>
+                      <span class="badge badge-blue">${pdf.year}</span>
+                      <h3 style="margin:6px 0 4px;font-size:15px;">${pdf.title}</h3>
+                    </div>
+                    ${locked
+                      ? `<button class="btn btn-amber btn-sm" onclick="openProModal()">🔒 Pro Passcode सक्रिय करा</button>`
+                      : `<button type="button" class="btn btn-primary btn-sm" onclick="openPdfInPortal('${safeTitle}', '${safeUrl}')">👁️ PDF पहा</button>`}
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        ` : ""}
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div>
+              <span class="badge badge-teal">155 PDFs • Question + Answer Key</span>
+              <h3 class="card-title" style="margin-top:4px;">📚 प्रश्नपत्रिका (${questionsList.length}) व Answer Keys (${answersList.length})</h3>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-sm ${appState.githubPdfFilter==='ALL'?'btn-primary':''}" onclick="appState.githubPdfFilter='ALL';saveState();renderAll();">सर्व (${ghAll.length})</button>
+              <button class="btn btn-sm ${appState.githubPdfFilter==='question'?'btn-primary':''}" onclick="appState.githubPdfFilter='question';saveState();renderAll();">प्रश्नपत्रिका (${questionsList.length})</button>
+              <button class="btn btn-sm ${appState.githubPdfFilter==='answer'?'btn-primary':''}" onclick="appState.githubPdfFilter='answer';saveState();renderAll();">Answer Keys (${answersList.length})</button>
+              <button class="btn btn-sm btn-accent" onclick="loadPortalPdfCatalog(true)">🔄 रिफ्रेश</button>
+            </div>
+          </div>
+          ${listToShow.length ? `
+            <div class="grid-2">
+              ${listToShow.map(pdf => {
+                const isAns = pdf.kind === "answer";
+                const matchedAns = !isAns ? findMatchingAnswerKey(pdf, answersList) : null;
+                const safeTitle = (pdf.title || "").replace(/'/g, "\\'");
+                const safeUrl = (pdf.file_url || "").replace(/'/g, "\\'");
+                const ansTitle = matchedAns ? (matchedAns.title || "").replace(/'/g, "\\'") : "";
+                const ansUrl = matchedAns ? (matchedAns.file_url || "").replace(/'/g, "\\'") : "";
+                return `
+                  <div class="topic-card">
+                    <div>
+                      <span class="badge ${isAns ? "badge-green" : "badge-blue"}">${isAns ? "✅ ANSWER KEY" : "📝 QUESTION PAPER"}</span>
+                      <span class="badge badge-amber">${pdf.year}</span>
+                      <h4 style="margin:6px 0 4px;font-size:14px;">${pdf.title}</h4>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                      <button type="button" class="btn btn-primary btn-sm" onclick="openPdfInPortal('${safeTitle}', '${safeUrl}')">👁️ ${isAns ? "Answer Key पहा" : "प्रश्नपत्रिका पहा"}</button>
+                      ${matchedAns ? `<button type="button" class="btn btn-accent btn-sm" onclick="openPdfInPortal('${ansTitle}', '${ansUrl}')">✅ Answer Key पहा</button>` : ""}
+                      ${pdf.download_url ? `<a class="btn btn-sm" href="${pdf.download_url}" target="_blank" rel="noopener" download="${pdf.fileName || (pdf.title + '.pdf')}">⬇ डाउनलोड</a>` : ""}
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          ` : `<p style="font-size:13px;color:var(--muted);">PDFs लोड होत आहेत किंवा <strong>🔄 रिफ्रेश</strong> दाबा.</p>`}
+        </div>
+      `;
     }
 
     function renderLeaderboardTab() {
