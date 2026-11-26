@@ -384,18 +384,28 @@
     }
 
     const MPSC_SUBJECTS = [
-      { key: "अंकगणित व बुद्धिमत्ता", label: "Reasoning & Arithmetic (अंकगणित व बुद्धिमत्ता)", preWeight: 18, mainsPaper: "paper2" },
-      { key: "सामान्य विज्ञान", label: "General Science (सामान्य विज्ञान)", preWeight: 14, mainsPaper: "paper2" },
       { key: "चालू घडामोडी", label: "Current Affairs (चालू घडामोडी)", preWeight: 14, mainsPaper: "paper2" },
-      { key: "इतिहास", label: "History (इतिहास व महाराष्ट्र)", preWeight: 12, mainsPaper: "paper2" },
       { key: "राज्यघटना व प्रशासन", label: "Indian Polity (राज्यघटना व प्रशासन)", preWeight: 12, mainsPaper: "paper2" },
-      { key: "अर्थव्यवस्था", label: "Economics (अर्थव्यवस्था)", preWeight: 12, mainsPaper: "paper2" },
+      { key: "इतिहास", label: "History (इतिहास व महाराष्ट्र)", preWeight: 12, mainsPaper: "paper2" },
       { key: "भूगोल", label: "Geography (भूगोल)", preWeight: 11, mainsPaper: "paper2" },
+      { key: "अर्थव्यवस्था", label: "Economics (अर्थव्यवस्था)", preWeight: 12, mainsPaper: "paper2" },
+      { key: "सामान्य विज्ञान", label: "General Science (सामान्य विज्ञान)", preWeight: 14, mainsPaper: "paper2" },
+      { key: "अंकगणित व बुद्धिमत्ता", label: "Reasoning & Arithmetic (अंकगणित व बुद्धिमत्ता)", preWeight: 18, mainsPaper: "paper2" },
       { key: "मराठी व्याकरण व आकलन", label: "मराठी व्याकरण व आकलन (Paper 1)", preWeight: 0, mainsPaper: "paper1" },
       { key: "इंग्रजी व्याकरण व आकलन", label: "इंग्रजी व्याकरण व आकलन (Paper 1)", preWeight: 0, mainsPaper: "paper1" }
     ];
 
     const VALID_SUBJECT_SET = new Set(MPSC_SUBJECTS.map(s => s.key));
+
+    const PRELIMS_SERIAL_ORDER = [
+      "चालू घडामोडी",
+      "राज्यघटना व प्रशासन",
+      "इतिहास",
+      "भूगोल",
+      "अर्थव्यवस्था",
+      "सामान्य विज्ञान",
+      "अंकगणित व बुद्धिमत्ता"
+    ];
 
     const TOPIC_KEYWORDS = {
       "मराठी व्याकरण व आकलन": {
@@ -499,7 +509,7 @@
       "MPSC-199-DEMO1": { code:"MPSC-199-DEMO1",student_id:"STU101",mobile:"",plan:"199_YEARLY",device_id:null,active:true,created_at:"2026-11-25" }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v29_full";
+    const STATE_KEY = "mpsc_sarav_2026_state_v30_serial";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -1024,14 +1034,14 @@
         const subPool = [...buckets[s.key]].sort(() => Math.random() - 0.5);
         const take = Math.min(Math.max(1, Math.round(s.preWeight * scaleFactor)), subPool.length);
         for (let j = 0; j < take && picked.length < count; j++) {
-          picked.push({ ...subPool[j], _uid: `${subPool[j].id}_${picked.length}` });
+          picked.push({ ...subPool[j] });
           usedIds.add(subPool[j].id);
         }
       }
       if (picked.length < count) {
         const rest = pool.filter(q => !usedIds.has(q.id)).sort(() => Math.random() - 0.5);
         for (let k = 0; k < rest.length && picked.length < count; k++) {
-          picked.push({ ...rest[k], _uid: `${rest[k].id}_${picked.length}` });
+          picked.push({ ...rest[k] });
           usedIds.add(rest[k].id);
         }
       }
@@ -1039,12 +1049,18 @@
         const shuffledAll = [...pool].sort(() => Math.random() - 0.5);
         let idx = 0;
         while (picked.length < count) {
-          const item = shuffledAll[idx % shuffledAll.length];
-          picked.push({ ...item, _uid: `${item.id}_fill_${picked.length}` });
+          picked.push({ ...shuffledAll[idx % shuffledAll.length] });
           idx++;
         }
       }
-      return picked.slice(0, count).sort(() => Math.random() - 0.5);
+      const ordered = picked.slice(0, count).sort((a, b) => {
+        const ia = PRELIMS_SERIAL_ORDER.indexOf(a.subject);
+        const ib = PRELIMS_SERIAL_ORDER.indexOf(b.subject);
+        const pa = ia === -1 ? 999 : ia;
+        const pb = ib === -1 ? 999 : ib;
+        return pa - pb;
+      });
+      return ordered.map((item, i) => ({ ...item, _uid: `${item.id}_ser_${i}` }));
     }
 
     function pickStrictTopicQuestions(subj, topicName, maxCount = 20) {
@@ -1057,7 +1073,11 @@
 
     function pickYearWisePyqQuestions(yearStr, maxCount = 50) {
       const yearPool = appState.questions.filter(q => q.q_type === "pyq" && String(q.year) === String(yearStr));
-      return [...yearPool].sort(() => Math.random() - 0.5).slice(0, maxCount).map((q, i) => ({ ...q, _uid: `${q.id}_yr_${i}` }));
+      return [...yearPool].sort(() => Math.random() - 0.5).slice(0, maxCount).sort((a, b) => {
+        const ia = PRELIMS_SERIAL_ORDER.indexOf(a.subject);
+        const ib = PRELIMS_SERIAL_ORDER.indexOf(b.subject);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      }).map((q, i) => ({ ...q, _uid: `${q.id}_yr_${i}` }));
     }
 
     function pickQuestionsWithRepeats(pool, count) {
@@ -1077,9 +1097,9 @@
         const pool = getFilteredPool("mains2");
         startExamSession({ title: "डेमो पेपर ३: मुख्य परीक्षा Paper 2 (सामान्य ज्ञान व विषय)", modeKey: "demo_mains2", customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 50), count: 50, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
       } else if (presetKey === "pre100") {
-        startExamSession({ title: "MPSC गट-क पूर्व परीक्षा (100 गुण)", modeKey: "pre100", customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 100), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
+        startExamSession({ title: "MPSC गट-क पूर्व परीक्षा (100 गुण • Subject Serial)", modeKey: "pre100", customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 100), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
       } else if (presetKey === "pre50") {
-        startExamSession({ title: "MPSC गट-क पूर्व सराव (50 प्रश्न)", modeKey: "pre50", customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 50), count: 50, marksPerQ: 1, negPerQ: 0.25, minutes: 30 });
+        startExamSession({ title: "MPSC गट-क पूर्व सराव (50 प्रश्न • Subject Serial)", modeKey: "pre50", customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 50), count: 50, marksPerQ: 1, negPerQ: 0.25, minutes: 30 });
       } else if (presetKey === "year_pyq") {
         const yr = extraData || appState.selectedPyqYear || "2022";
         const yrQs = pickYearWisePyqQuestions(yr, 50);
@@ -1277,7 +1297,7 @@
     function renderDashboard() {
       let pyqCount = 0, newCount = 0;
       for (let i = 0; i < appState.questions.length; i++) appState.questions[i].q_type === "new" ? newCount++ : pyqCount++;
-      return `<div class="card" style="background:linear-gradient(125deg,#eff6ff 0%,#f0fdfa 100%);border-color:#bfdbfe;"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;"><div><span class="badge badge-blue">MPSC गट-क (Group C) • 2026-27 • Zero AI Cost</span><h1 class="card-title" style="font-size:21px;margin-top:6px;">१-१ डेमो पेपर्स, पूर्व १०० गुण, वर्षनिहाय PYQ सराव व घटकनिहाय २० प्रश्न</h1><p class="card-sub" style="margin-bottom:0;">Pro प्लॅन <strong>₹199/वर्ष</strong> (१ पासकोड = १ Student ID + १ Device Lock) • पेमेंट किंवा कोणत्याही Query/Inquiry साठी थेट <strong>WhatsApp 8554011484</strong> वर संपर्क.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="startExamByKey('demo_pre')">▶ पूर्व डेमो पेपर (100 प्रश्न)</button><button class="btn btn-wa" onclick="openWhatsAppInquiry()">💬 WhatsApp 8554011484</button></div></div></div><div class="grid-4"><div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक</div></div><div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div><div class="stat-box"><div class="stat-num" style="color:var(--amber);">Year-wise PYQ</div><div class="stat-lbl">वर्षानुसार PYQ सराव उपलब्ध</div></div><div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div></div><div class="card" style="margin-top:14px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🧪 १-१ डेमो पेपर्स (MPSC गट-क पॅटर्ननुसार)</h2><div style="font-size:12px;color:var(--muted);">आधी डेमो पेपर्स तपासा; पूर्ण प्रवेशासाठी ₹199/वर्ष Passcode सक्रिय करा.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><select class="select" onchange="appState.qTypeFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.qTypeFilter==="ALL"?"selected":""}>सर्व प्रश्न (PYQ + नवीन)</option><option value="pyq" ${appState.qTypeFilter==="pyq"?"selected":""}>फक्त PYQ प्रश्न</option><option value="new" ${appState.qTypeFilter==="new"?"selected":""}>फक्त नवीन प्रश्न</option></select><select class="select" onchange="appState.yearFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.yearFilter==="ALL"?"selected":""}>सर्व वर्षे</option>${[2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015].map(y => `<option value="${y}" ${String(appState.yearFilter)===String(y)?"selected":""}>${y}</option>`).join("")}</select></div></div><div class="grid-3"><div class="topic-card"><div><span class="badge badge-blue">डेमो पेपर १ • पूर्व परीक्षा</span><h3 style="margin:6px 0 4px;font-size:15px;">पूर्व परीक्षा डेमो (100 प्रश्न • 60 मि.)</h3><div style="font-size:12px;color:var(--muted);">7 विषय भारांश, +1 गुण व -0.25 निगेटिव्ह मार्किंग पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-primary btn-sm" onclick="startExamByKey('demo_pre')">पूर्व डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-amber">डेमो पेपर २ • मुख्य Paper 1</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 1 डेमो (मराठी व इंग्रजी)</h3><div style="font-size:12px;color:var(--muted);">मराठी व्याकरण-आकलन व इंग्रजी व्याकरण-शब्दसंग्रह पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-amber btn-sm" onclick="startExamByKey('demo_mains1')">Paper 1 डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-teal">डेमो पेपर ३ • मुख्य Paper 2</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 2 डेमो (सामान्य ज्ञान व विषय)</h3><div style="font-size:12px;color:var(--muted);">इतिहास, भूगोल, राज्यघटना, अर्थव्यवस्था, विज्ञान, चालू घडामोडी व RTI/RTS डेमो पेपर.</div></div><button class="btn btn-accent btn-sm" onclick="startExamByKey('demo_mains2')">Paper 2 डेमो सुरू करा</button></div></div></div>`;
+      return `<div class="card" style="background:linear-gradient(125deg,#eff6ff 0%,#f0fdfa 100%);border-color:#bfdbfe;"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;"><div><span class="badge badge-blue">MPSC गट-क (Group C) • 2026-27 • Subject Serial Prelims</span><h1 class="card-title" style="font-size:21px;margin-top:6px;">१-१ डेमो पेपर्स, पूर्व १०० गुण (क्रमवार विषय), वर्षनिहाय PYQ व घटकनिहाय २० प्रश्न</h1><p class="card-sub" style="margin-bottom:0;">Pro प्लॅन <strong>₹199/वर्ष</strong> (१ पासकोड = १ Student ID + १ Device Lock) • पेमेंट किंवा कोणत्याही Query/Inquiry साठी थेट <strong>WhatsApp 8554011484</strong> वर संपर्क.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="startExamByKey('demo_pre')">▶ पूर्व डेमो पेपर (100 प्रश्न)</button><button class="btn btn-wa" onclick="openWhatsAppInquiry()">💬 WhatsApp 8554011484</button></div></div></div><div class="grid-4"><div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक</div></div><div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div><div class="stat-box"><div class="stat-num" style="color:var(--amber);">Subject Serial</div><div class="stat-lbl">पूर्व परीक्षेचा क्रमवार पॅटर्न</div></div><div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div></div><div class="card" style="margin-top:14px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🧪 १-१ डेमो पेपर्स (MPSC गट-क पॅटर्ननुसार)</h2><div style="font-size:12px;color:var(--muted);">आधी डेमो पेपर्स तपासा; पूर्ण प्रवेशासाठी ₹199/वर्ष Passcode सक्रिय करा.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><select class="select" onchange="appState.qTypeFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.qTypeFilter==="ALL"?"selected":""}>सर्व प्रश्न (PYQ + नवीन)</option><option value="pyq" ${appState.qTypeFilter==="pyq"?"selected":""}>फक्त PYQ प्रश्न</option><option value="new" ${appState.qTypeFilter==="new"?"selected":""}>फक्त नवीन प्रश्न</option></select><select class="select" onchange="appState.yearFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.yearFilter==="ALL"?"selected":""}>सर्व वर्षे</option>${[2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016,2015].map(y => `<option value="${y}" ${String(appState.yearFilter)===String(y)?"selected":""}>${y}</option>`).join("")}</select></div></div><div class="grid-3"><div class="topic-card"><div><span class="badge badge-blue">डेमो पेपर १ • पूर्व परीक्षा</span><h3 style="margin:6px 0 4px;font-size:15px;">पूर्व परीक्षा डेमो (100 प्रश्न • 60 मि.)</h3><div style="font-size:12px;color:var(--muted);">7 विषय क्रमवार, +1 गुण व -0.25 निगेटिव्ह मार्किंग पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-primary btn-sm" onclick="startExamByKey('demo_pre')">पूर्व डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-amber">डेमो पेपर २ • मुख्य Paper 1</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 1 डेमो (मराठी व इंग्रजी)</h3><div style="font-size:12px;color:var(--muted);">मराठी व्याकरण-आकलन व इंग्रजी व्याकरण-शब्दसंग्रह पॅटर्ननुसार 1 डेमो पेपर.</div></div><button class="btn btn-amber btn-sm" onclick="startExamByKey('demo_mains1')">Paper 1 डेमो सुरू करा</button></div><div class="topic-card"><div><span class="badge badge-teal">डेमो पेपर ३ • मुख्य Paper 2</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 2 डेमो (सामान्य ज्ञान व विषय)</h3><div style="font-size:12px;color:var(--muted);">इतिहास, भूगोल, राज्यघटना, अर्थव्यवस्था, विज्ञान, चालू घडामोडी व RTI/RTS डेमो पेपर.</div></div><button class="btn btn-accent btn-sm" onclick="startExamByKey('demo_mains2')">Paper 2 डेमो सुरू करा</button></div></div></div>`;
     }
 
     function renderPreExamTab() {
@@ -1292,7 +1312,7 @@
       const years = Object.keys(yearCounts).sort((a, b) => Number(b) - Number(a));
       const activeYr = years.includes(String(appState.selectedPyqYear)) ? String(appState.selectedPyqYear) : (years[0] || "2022");
 
-      return `<div class="card"><h2 class="card-title">📝 MPSC गट-क पूर्व परीक्षा (100 गुण) व थेट Year-wise PYQ सराव</h2><p class="card-sub">एकूण 100 प्रश्न • 100 गुण • 60 मिनिटे • चुकीच्या उत्तरासाठी -0.25 गुण (1/4 निगेटिव्ह मार्किंग).</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"><button class="btn btn-primary" onclick="startExamByKey('pre100')">▶ संपूर्ण 100 गुणांची पूर्व परीक्षा</button><button class="btn btn-accent" onclick="startExamByKey('pre50')">⚡ 50 प्रश्नांची पूर्व सराव चाचणी</button></div><div class="stat-box" style="margin-bottom:16px;background:#f0fdfa;border-color:#99f6e4;"><div style="font-weight:800;font-size:14px;margin-bottom:8px;">📅 थेट Year-wise PYQ पेपर सोडवा</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select class="select" onchange="appState.selectedPyqYear=this.value;saveState();renderAll();">${(years.length ? years : ["2025","2023","2022","2021","2020","2019"]).map(y => `<option value="${y}" ${y===activeYr?"selected":""}>PYQ वर्ष ${y} (${yearCounts[y] || 0} प्रश्न)</option>`).join("")}</select><button class="btn btn-accent btn-sm" onclick="startExamByKey('year_pyq', '${activeYr}')">▶ ${activeYr} वर्षाचे PYQ सुरू करा</button></div></div><h3 style="font-size:15px;font-weight:800;margin:14px 0 8px;">पूर्व परीक्षा विषय भारांश (100 प्रश्न पॅटर्ननुसार)</h3><table><thead><tr><th>विषय</th><th>अंदाजे भारांश</th><th>सराव</th></tr></thead><tbody>${preSubjects.map(s => `<tr><td><strong>${s.label}</strong></td><td>${s.preWeight} प्रश्न</td><td><button class="btn btn-sm" onclick="startExamByKey('subj20', '${encodeURIComponent(s.key)}')">20 प्रश्न सराव</button></td></tr>`).join("")}</tbody></table></div>`;
+      return `<div class="card"><h2 class="card-title">📝 MPSC गट-क पूर्व परीक्षा (100 गुण • Subject Serial Order)</h2><p class="card-sub">क्रम: चालू घडामोडी → राज्यघटना → इतिहास → भूगोल → अर्थव्यवस्था → सामान्य विज्ञान → अंकगणित व बुद्धिमत्ता (+1 / -0.25 गुण).</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"><button class="btn btn-primary" onclick="startExamByKey('pre100')">▶ संपूर्ण 100 गुणांची पूर्व परीक्षा</button><button class="btn btn-accent" onclick="startExamByKey('pre50')">⚡ 50 प्रश्नांची पूर्व सराव चाचणी</button></div><div class="stat-box" style="margin-bottom:16px;background:#f0fdfa;border-color:#99f6e4;"><div style="font-weight:800;font-size:14px;margin-bottom:8px;">📅 थेट Year-wise PYQ पेपर सोडवा</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select class="select" onchange="appState.selectedPyqYear=this.value;saveState();renderAll();">${(years.length ? years : ["2025","2023","2022","2021","2020","2019"]).map(y => `<option value="${y}" ${y===activeYr?"selected":""}>PYQ वर्ष ${y} (${yearCounts[y] || 0} प्रश्न)</option>`).join("")}</select><button class="btn btn-accent btn-sm" onclick="startExamByKey('year_pyq', '${activeYr}')">▶ ${activeYr} वर्षाचे PYQ सुरू करा</button></div></div><h3 style="font-size:15px;font-weight:800;margin:14px 0 8px;">पूर्व परीक्षा विषय अनुक्रम व भारांश</h3><table><thead><tr><th>क्रम</th><th>विषय</th><th>अंदाजे भारांश</th><th>सराव</th></tr></thead><tbody>${preSubjects.map((s, idx) => `<tr><td><strong>${idx + 1}</strong></td><td><strong>${s.label}</strong></td><td>${s.preWeight} प्रश्न</td><td><button class="btn btn-sm" onclick="startExamByKey('subj20', '${encodeURIComponent(s.key)}')">20 प्रश्न सराव</button></td></tr>`).join("")}</tbody></table></div>`;
     }
 
     function renderMainsExamTab() {
