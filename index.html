@@ -19,7 +19,7 @@
       --shadow:0 10px 28px -8px rgba(15,23,42,.10),0 2px 6px -1px rgba(15,23,42,.04);
     }
     * { box-sizing:border-box; }
-    body { margin:0;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink);line-height:1.68;overflow-x:hidden;text-rendering:optimizeLegibility; }
+    body { margin:0;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink);line-height:1.72;overflow-x:hidden;text-rendering:optimizeLegibility;font-feature-settings:"kern" 1,"liga" 1,"mark" 1,"mkmk" 1; }
     button,input,select,textarea { font-family:inherit;max-width:100%; }
     .container { max-width:1240px;margin:0 auto;padding:0 14px; }
 
@@ -390,7 +390,51 @@
       window.location.href = targetUrl;
     }
 
+    /* Comprehensive Devanagari & Marathi OCR Broken-Character Repair Engine (Screenshot 271-275 patterns included) */
     const DEVANAGARI_REPAIRS = [
+      // Broken letter 'म' -> 'म्ह' / 'म' artifacts seen in screenshots (म्म्हणून -> म्हणून, म्म्हणजे -> म्हणजे)
+      [/म्म्हणून/g, "म्हणून"],
+      [/म्म्हणजे/g, "म्हणजे"],
+      [/म्म्हणतात/g, "म्हणतात"],
+      [/प्रततस्पर्धी/g, "प्रतिस्पर्धी"],
+      [/स्पधाय/g, "स्पर्धा"],
+      [/स्पधेत/g, "स्पर्धेत"],
+      [/स्पधेमध्ये/g, "स्पर्धेमध्ये"],
+      [/स्पधां/g, "स्पर्धा"],
+      [/वल््य/g, "वर्ल्ड"],
+      [/अॅव्हॉडय/g, "अवॉर्ड"],
+      [/अॅवॉर्डय/g, "अवॉर्ड"],
+      [/अॅवॉड/g, "अवॉर्ड"],
+      [/टेनिस/g, "टेनिस"],
+      [/व्हीलचेअर/g, "व्हीलचेअर"],
+      [/हॉल\s*ऑफ\s*फेम/g, "हॉल ऑफ फेम"],
+      // Screenshot 273: "सहाआदे शक अंतराळ शै णक का या सामंज य करारावर _______ येथे _______ रोजी वा री कर यात आली."
+      [/सहाआदे\s*शक/g, "सहादेश"],
+      [/शै\s*णक/g, "शैक्षणिक"],
+      [/सामंज\s*य/g, "सामंजस्य"],
+      [/वा\s*री\s*कर\s*यात\s*आली/g, "स्वाक्षरी करण्यात आली"],
+      [/नो\s*हबर/g, "नोव्हेंबर"],
+      [/इसबर/g, "डिसेंबर"],
+      [/बंगलोर/g, "बेंगळुरू"],
+      // Screenshot 274: "पिग्मी लोकांचे खालीलपैकी कोणते शारीररक वैशिष्ठे बरोबर आहेत? अ. ते जा उंचीचे असतात ब. त्यांचा वणत पिवळसर असतो क. त्यांचे नाक चपटे असते ड. त्यांचे ओठ बारीक असतात"
+      [/शारीररक/g, "शारीरिक"],
+      [/वैशिष्ठे/g, "वैशिष्ट्ये"],
+      [/वैशिष्ट्ट्ये/g, "वैशिष्ट्ये"],
+      [/वैशिष्ट्ट्य/g, "वैशिष्ट्य"],
+      [/वणत/g, "वर्ण"],
+      [/जा\s+उंचीचे/g, "जास्त उंचीचे"],
+      [/जा\s+पाऊस/g, "जास्त पाऊस"],
+      [/जा\s+असतात/g, "जास्त असतात"],
+      [/जा\s+होते/g, "जास्त होते"],
+      [/जा\s+लांबीच्या/g, "जास्त लांबीच्या"],
+      [/जा\s+प्रमाणात/g, "जास्त प्रमाणात"],
+      [/जा\s+वेगाने/g, "जास्त वेगाने"],
+      // Screenshot 275: "औद्योगिक आणि आथियक पुनरयचना मंडळ"
+      [/औद्योगिक\s+आणि\s+आथियक\s+पुनरयचना\s+मंडळ/g, "औद्योगिक आणि आर्थिक पुनर्रचना मंडळ"],
+      [/पुनरयचना/g, "पुनर्रचना"],
+      [/पुनरयचनेचा/g, "पुनर्रचनेचा"],
+      [/पुनरुज्जीवन/g, "पुनरुज्जीवन"],
+      // Common Devanagari OCR & rafar/matra errors
       [/त\s+नयु/g, "नवीन"],
       [/मूल\s+संवगात/g, "मूळ संवर्गात"],
       [/पु\s+हा/g, "पुन्हा"],
@@ -480,9 +524,50 @@
       for (let i = 0; i < DEVANAGARI_REPAIRS.length; i++) {
         s = s.replace(DEVANAGARI_REPAIRS[i][0], DEVANAGARI_REPAIRS[i][1]);
       }
+      // Rejoin split Marathi postpositions/case suffixes
       s = s.replace(/([\u0900-\u097F]{2,})\s+(चा|ची|चे|च्या|ला|ना|ने|नी|तून|मधून|मधील|मध्ये|साठी|कडून|प्रमाणे|नुसार|बद्दल|शिवाय)\b/g, "$1$2");
+      // Clean spaces before punctuation
       s = s.replace(/\s+([,.;:?!।])/g, "$1");
+      // Collapse excessive blank lines/spaces
       return s.replace(/\s{2,}/g, " ").trim();
+    }
+
+    function normalizeMatchKeyText(txt) {
+      return repairDevanagariText(txt || "")
+        .toLowerCase()
+        .replace(/[^\u0900-\u097Fa-z0-9]/g, "")
+        .slice(0, 140);
+    }
+
+    function deduplicateQuestionsList(list) {
+      const seenIds = new Set();
+      const seenTexts = new Set();
+      const unique = [];
+
+      for (let i = 0; i < list.length; i++) {
+        const q = list[i];
+        if (!q || !q.question_mr) continue;
+        const idKey = String(q.id || "").trim();
+        const txtKey = normalizeMatchKeyText(q.question_mr);
+
+        if (idKey && seenIds.has(idKey)) continue;
+        if (txtKey && seenTexts.has(txtKey)) continue;
+
+        if (idKey) seenIds.add(idKey);
+        if (txtKey) seenTexts.add(txtKey);
+        unique.push(q);
+      }
+      return unique;
+    }
+
+    async function cleanDuplicateQuestionsNow() {
+      const beforeCount = appState.questions.length;
+      appState.questions = deduplicateQuestionsList(appState.questions);
+      const afterCount = appState.questions.length;
+      renderAll();
+      await saveQuestionsChunked(appState.questions);
+      saveState();
+      showToast(`डुप्लिकेट साफ केले! ${beforeCount} वरून ${afterCount} अचूक प्रश्न राहिले.`);
     }
 
     const MPSC_SUBJECTS = [
@@ -611,7 +696,7 @@
           "रायगड","पालघर","नांदेड","लातूर","धाराशिव","बीड","जालना","परभणी","हिंगोली","अकोला","अमरावती",
           "यवतमाळ","वाशीम","गडचिरोली","गोंदिया","चंद्रपूर","भंडारा","धुळे","नंदुरबार","जळगाव","सोलापूर",
           "सांगली","सातारा","पुणे","अहमदनगर","नाशिक","रेगूर","काळी मृदा","जांभ्या मृदा","खारी जमीन",
-          "अभयारण्ये","तालुका","महाराष्ट्रातील","महाराष्ट्राच्या","कोल्हापूर","नागपूर","ठाणे"
+          "अभयारण्ये","तालुका","महाराष्ट्रातील","महाराष्ट्राच्या","कोल्हापूर","नागपूर","ठाणे","पिग्मी"
         ],
         "भारताचा व जगाचा भूगोल": [
           "हिमालय","मान्सून","नदी","खनिज","अक्षांश","रेखांश","वाळवंट","अभयारण्य","बंगालचा उपसागर",
@@ -637,7 +722,7 @@
           "राजकोषीय","भांडवली","चालू खाते","परकीय चलन","sebi","exim","sidbi","बँकिंग","मुद्रास्फीती",
           "निर्गुंतवणूक","खाजगीकरण","जागतिकीकरण","उदारीकरण","आर्थिक पाहणी","कृषी","उद्योग","सेवा क्षेत्र",
           "ई-नाम","कमाल आधारभूत","msp","सार्वजनिक वितरण","अनुदान","वस्तू व सेवा","करप्रणाली",
-          "वित्त आयोग","केळकर","रंगराजन","तेंडुलकर","लकडवाला","अंदाजपत्रक","आयकर","व्यापारी","सहकारी"
+          "वित्त आयोग","केळकर","रंगराजन","तेंडुलकर","लकडवाला","अंदाजपत्रक","आयकर","व्यापारी","सहकारी","bifr","पुनर्रचना"
         ],
         "पंचवार्षिक योजना व दारिद्र्य": [
           "पंचवार्षिक योजना","दुसरी पंचवार्षिक","चौथी पंचवार्षिक","पाचवी पंचवार्षिक","अकरावी पंचवार्षिक",
@@ -696,7 +781,7 @@
           "आंतरराष्ट्रीय करार","संयुक्त राष्ट्र","जी-२०","जी २०","g20","ब्रिक्स","brics","शिखर परिषद",
           "जागतिक परिषद","द्विपक्षीय करार","युनो","नाटो","nato","आसियान","asean","युनेस्को","युनिसेफ",
           "जागतिक बँक","imf","wto","आंतरराष्ट्रीय न्यायालय","राजदूत","दौरा","सराव युद्ध","युद्धाभ्यास",
-          "जागतिक अहवाल","इंडो-पॅसिफिक","कोणत्या देशाने पहिला"
+          "जागतिक अहवाल","इंडो-पॅसिफिक","कोणत्या देशाने पहिला","सामंजस्य करार"
         ],
         "महाराष्ट्र शासन व योजना": [
           "महाराष्ट्र शासन","राज्य शासन","मुख्यमंत्री योजना","लाडकी बहीण","महाराष्ट्र मंत्रिमंडळ",
@@ -712,12 +797,12 @@
           "पुरस्कार","नोबेल","भारतरत्न","ऑलिम्पिक","क्रिकेट","विश्वचषक","पदक","खेळाडू","क्रीडा","चषक",
           "अवॉर्ड","medal","olympic","world cup","award","ऑस्कर","दादासाहेब फाळके","ज्ञानपीठ","साहित्य अकादमी",
           "मेजर ध्यानचंद","अर्जुन","द्रोणाचार्य","आशियाई क्रीडा","पॅरालिम्पिक","ग्रँड स्लॅम","विम्बल्डन",
-          "आयपीएल","कसोटी","एकदिवसीय","टी-२०","शहमत","बॅडमिंटन","कुस्ती","नेमबाजी","तिरंदाजी","मन कौर","इमा मॅकीअन"
+          "आयपीएल","कसोटी","एकदिवसीय","टी-२०","शहमत","बॅडमिंटन","कुस्ती","नेमबाजी","तिरंदाजी","मन कौर","इमा मॅकीअन","लॉरियस","ऑलिम्पिक"
         ],
         "विज्ञान, तंत्रज्ञान व पर्यावरण": [
           "इस्रो","isro","चांद्रयान","आदित्य एल","उपग्रह प्रक्षेपण","एआय","क्वांटम","पर्यावरण दिन",
           "हवामान परिषद","cop","गगनयान","pslv","gslv","lvm3","कृत्रिम बुद्धिमत्ता","chatgpt","रोबोटिक्स",
-          "सुपर कॉम्प्युटर","जैवइंधन","ग्रीन हायड्रोजन","सौर ऊर्जा","अंतराळ","नासा","nasa","जागतिक हवामान"
+          "सुपर कॉम्प्युटर","जैवइंधन","ग्रीन हायड्रोजन","सौर ऊर्जा","अंतराळ","नासा","nasa","जागतिक हवामान","अंतराळ शैक्षणिक"
         ]
       }
     };
@@ -765,7 +850,7 @@
       "MPSC-199-DEMO1": { code:"MPSC-199-DEMO1",student_id:"STU101",mobile:"",plan:"199_YEARLY",device_id:null,active:true,created_at:"2026-11-25" }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v34_seg";
+    const STATE_KEY = "mpsc_sarav_2026_state_v35_smart";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -783,6 +868,7 @@
       const fallback = {
         activeTab:"dashboard",studentName:"उमेदवार",studentDistrict:"नाशिक",boundStudentId:"",activePasscode:"",isProUnlocked:false,
         adminPasswordHash:btoa("admin123"),isAdminAuthenticated:false,adminTab:"passcodes",
+        passcodeStatusFilter:"ALL",passcodeSearch:"",
         supabaseUrl:DEFAULT_SUPABASE_URL,supabaseKey:DEFAULT_SUPABASE_KEY,
         questions:SAMPLE_QUESTIONS,pdfs:DEFAULT_PDFS,githubPdfs:[],removedPdfKeys:[],pdfAccessFilter:"ALL",passcodes:DEFAULT_PASSCODES,
         mistakes:[],bookmarks:[],
@@ -1162,7 +1248,7 @@
 
     async function reclassifyExistingQuestions() {
       if (!appState.questions.length) return;
-      showToast("Smart Engine ने अक्षर दुरुस्ती व विषय-घटक वर्गवारी सुरू केली...");
+      showToast("Smart Engine ने अक्षर दुरुस्ती, डुप्लिकेट सफाई व विषय-घटक वर्गवारी सुरू केली...");
       const updated = new Array(appState.questions.length);
       for (let i = 0; i < appState.questions.length; i++) {
         const q = appState.questions[i];
@@ -1174,11 +1260,11 @@
         if (c.subject === "मराठी व्याकरण व आकलन" || c.subject === "इंग्रजी व्याकरण व आकलन") stage = "mains1";
         updated[i] = { ...q, question_mr: fixedText, options: fixedOpts, explanation_mr: fixedExp, subject: c.subject, topic: c.topic, exam_stage: stage };
       }
-      appState.questions = updated;
+      appState.questions = deduplicateQuestionsList(updated);
       renderAll();
       await saveQuestionsChunked(appState.questions);
       saveState();
-      showToast(`पूर्ण! सर्व ${appState.questions.length} प्रश्न अचूक विषय-घटकांत वर्गवारी केले गेले.`);
+      showToast(`पूर्ण! ${appState.questions.length} अचूक व स्वच्छ प्रश्न तयार झाले.`);
     }
 
     function normalizeQuestion(raw, idx = 0, forcedType = null) {
@@ -1364,7 +1450,8 @@
 
     async function syncQuestionsToCloud() {
       if (!appState.supabaseUrl || !appState.supabaseKey) { showToast("Supabase URL/Key सेट नाही."); return; }
-      showToast("प्रश्न क्लाउडवर वेगाने सिंक होत आहेत...");
+      appState.questions = deduplicateQuestionsList(appState.questions);
+      showToast(`${appState.questions.length} स्वच्छ प्रश्न क्लाउडवर सिंक होत आहेत...`);
       const batchSize = 500, chunks = [];
       for (let i = 0; i < appState.questions.length; i += batchSize) {
         chunks.push(appState.questions.slice(i, i + batchSize).map(q => ({
@@ -1422,11 +1509,11 @@
           }
         }
         if (allRows.length > 0) {
-          appState.questions = allRows.map((r, i) => normalizeQuestion(r, i));
+          appState.questions = deduplicateQuestionsList(allRows.map((r, i) => normalizeQuestion(r, i)));
           renderAll();
           await saveQuestionsChunked(appState.questions);
           saveState();
-          if (!silent) showToast(`क्लाउडवरून ${appState.questions.length} प्रश्न दुरुस्त व लोड झाले.`);
+          if (!silent) showToast(`क्लाउडवरून ${appState.questions.length} स्वच्छ प्रश्न लोड झाले.`);
           return true;
         }
         if (!silent) showToast("क्लाउडवर अजून प्रश्न नाहीत.");
@@ -1451,7 +1538,7 @@
     }
 
     async function ingestQuestionArray(arr, forcedType) {
-      const byId = new Map(appState.questions.map(q => [q.id, q]));
+      const byId = new Map(appState.questions.map(q => [String(q.id).trim(), q]));
       let added = 0, updated = 0;
 
       for (let idx = 0; idx < arr.length; idx++) {
@@ -1460,24 +1547,26 @@
         if (raw.subject && VALID_SUBJECT_SET.has(raw.subject)) norm.subject = raw.subject;
         if (raw.topic && TOPIC_KEYWORDS[norm.subject]?.[raw.topic]) norm.topic = raw.topic;
 
-        if (byId.has(norm.id)) {
-          const old = byId.get(norm.id);
+        const keyId = String(norm.id).trim();
+        if (byId.has(keyId)) {
+          const old = byId.get(keyId);
           old.subject = norm.subject;
           old.topic = norm.topic;
           old.exam_stage = norm.exam_stage;
           if (norm.question_mr) old.question_mr = norm.question_mr;
           updated++;
         } else {
-          byId.set(norm.id, norm);
+          byId.set(keyId, norm);
           appState.questions.push(norm);
           added++;
         }
       }
 
+      appState.questions = deduplicateQuestionsList(appState.questions);
       renderAll();
       await saveQuestionsChunked(appState.questions);
       saveState();
-      showToast(`पूर्ण! ${updated} प्रश्नांचे विषय-घटक अपडेट व ${added} नवीन प्रश्न जोडले.`);
+      showToast(`पूर्ण! ${updated} प्रश्नांचे विषय-घटक अपडेट व ${added} नवीन प्रश्न (डुप्लिकेटमुक्त: ${appState.questions.length}).`);
     }
 
     async function resetSavedQuestions() {
@@ -1764,12 +1853,12 @@
           const chosen = activeExam.answers[q._uid];
           const isRight = chosen === q.answer;
           const steps = buildDetailedExplanation(q, chosen);
-          return `<div class="stat-box" style="margin-bottom:12px;border-left:4px solid ${isRight ? "var(--emerald)" : "var(--rose)"};"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"><span class="badge badge-blue">${q.subject}</span><span class="badge badge-teal">${q.topic}</span><span class="badge ${isRight ? "badge-green" : "badge-rose"}">${isRight ? "बरोबर" : (chosen !== undefined ? "चुकले" : "सोडवलेले नाही")}</span></div><div style="font-weight:700;margin-bottom:6px;">प्र. ${idx + 1}: ${q.question_mr}</div><div style="font-size:12.5px;margin-bottom:6px;">तुमचे उत्तर: <strong>${chosen !== undefined ? `(${String.fromCharCode(65 + chosen)}) ${q.options[chosen]}` : "सोडवले नाही"}</strong> • योग्य उत्तर: <strong style="color:var(--emerald);">(${String.fromCharCode(65 + q.answer)}) ${q.options[q.answer]}</strong></div><div class="exp-box">${steps.map(st => `<div class="exp-step">${st}</div>`).join("")}</div></div>`;
+          return `<div class="stat-box" style="margin-bottom:12px;border-left:4px solid ${isRight ? "var(--emerald)" : "var(--rose)"};"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;"><span class="badge badge-blue">${q.subject}</span><span class="badge badge-teal">${q.topic}</span><span class="badge ${isRight ? "badge-green" : "badge-rose"}">${isRight ? "बरोबर" : (chosen !== undefined ? "चुकले" : "सोडवलेले नाही")}</span></div><div style="font-weight:700;margin-bottom:6px;">प्र. ${idx + 1}: ${repairDevanagariText(q.question_mr)}</div><div style="font-size:12.5px;margin-bottom:6px;">तुमचे उत्तर: <strong>${chosen !== undefined ? `(${String.fromCharCode(65 + chosen)}) ${repairDevanagariText(q.options[chosen])}` : "सोडवले नाही"}</strong> • योग्य उत्तर: <strong style="color:var(--emerald);">(${String.fromCharCode(65 + q.answer)}) ${repairDevanagariText(q.options[q.answer])}</strong></div><div class="exp-box">${steps.map(st => `<div class="exp-step">${st}</div>`).join("")}</div></div>`;
         }).join("")}</div>`;
       }
       const q = activeExam.questions[activeExam.currentIndex], chosen = activeExam.answers[q._uid], isBookmarked = appState.bookmarks.includes(q.id);
       const mins = String(Math.floor(activeExam.secondsLeft / 60)).padStart(2, "0"), secs = String(activeExam.secondsLeft % 60).padStart(2, "0");
-      return `<div class="exam-header"><div><div style="font-weight:800;font-size:15.5px;">${activeExam.title}</div><div style="font-size:12px;color:#cbd5e1;">प्रश्न ${activeExam.currentIndex + 1} / ${activeExam.questions.length} • गुण: +${activeExam.marksPerQ} / -${activeExam.negPerQ}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="timer-box" id="examTimerDisplay">⏱ ${mins}:${secs}</span><button class="btn btn-rose btn-sm" onclick="submitExam()">सबमिट करा</button><button class="btn btn-sm" onclick="exitExam()">बाहेर</button></div></div><div class="exam-split"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><div><span class="badge badge-blue">${q.subject}</span> <span class="badge badge-teal">${q.topic}</span> <span class="badge badge-amber">${q.q_type.toUpperCase()} ${q.year}</span></div><button class="btn btn-sm" onclick="toggleBookmark('${q.id}')">${isBookmarked ? "★ बुकमार्क" : "☆ बुकमार्क"}</button></div><div style="font-size:16px;font-weight:700;margin-bottom:14px;">${q.question_mr}</div>${q.options.map((opt, idx) => `<div class="option-item ${chosen === idx ? "selected" : ""}" onclick="selectExamOption(${idx})"><strong>(${String.fromCharCode(65 + idx)})</strong><span>${opt}</span></div>`).join("")}<div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn" onclick="jumpExamQuestion(${activeExam.currentIndex - 1})" ${activeExam.currentIndex === 0 ? "disabled" : ""}>← मागील</button><button class="btn btn-primary" onclick="jumpExamQuestion(${activeExam.currentIndex + 1})" ${activeExam.currentIndex === activeExam.questions.length - 1 ? "disabled" : ""}>पुढील →</button></div></div><div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:10px;">प्रश्न पॅलेट</div><div class="palette-grid">${activeExam.questions.map((item, idx) => `<button class="pal-btn ${activeExam.answers[item._uid] !== undefined ? "answered" : ""} ${idx === activeExam.currentIndex ? "current" : ""}" onclick="jumpExamQuestion(${idx})">${idx + 1}</button>`).join("")}</div></div></div>`;
+      return `<div class="exam-header"><div><div style="font-weight:800;font-size:15.5px;">${activeExam.title}</div><div style="font-size:12px;color:#cbd5e1;">प्रश्न ${activeExam.currentIndex + 1} / ${activeExam.questions.length} • गुण: +${activeExam.marksPerQ} / -${activeExam.negPerQ}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="timer-box" id="examTimerDisplay">⏱ ${mins}:${secs}</span><button class="btn btn-rose btn-sm" onclick="submitExam()">सबमिट करा</button><button class="btn btn-sm" onclick="exitExam()">बाहेर</button></div></div><div class="exam-split"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><div><span class="badge badge-blue">${q.subject}</span> <span class="badge badge-teal">${q.topic}</span> <span class="badge badge-amber">${q.q_type.toUpperCase()} ${q.year}</span></div><button class="btn btn-sm" onclick="toggleBookmark('${q.id}')">${isBookmarked ? "★ बुकमार्क" : "☆ बुकमार्क"}</button></div><div style="font-size:16px;font-weight:700;margin-bottom:14px;">${repairDevanagariText(q.question_mr)}</div>${q.options.map((opt, idx) => `<div class="option-item ${chosen === idx ? "selected" : ""}" onclick="selectExamOption(${idx})"><strong>(${String.fromCharCode(65 + idx)})</strong><span>${repairDevanagariText(opt)}</span></div>`).join("")}<div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn" onclick="jumpExamQuestion(${activeExam.currentIndex - 1})" ${activeExam.currentIndex === 0 ? "disabled" : ""}>← मागील</button><button class="btn btn-primary" onclick="jumpExamQuestion(${activeExam.currentIndex + 1})" ${activeExam.currentIndex === activeExam.questions.length - 1 ? "disabled" : ""}>पुढील →</button></div></div><div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:10px;">प्रश्न पॅलेट</div><div class="palette-grid">${activeExam.questions.map((item, idx) => `<button class="pal-btn ${activeExam.answers[item._uid] !== undefined ? "answered" : ""} ${idx === activeExam.currentIndex ? "current" : ""}" onclick="jumpExamQuestion(${idx})">${idx + 1}</button>`).join("")}</div></div></div>`;
     }
 
     function renderDashboard() {
@@ -1806,7 +1895,7 @@
         </div>
 
         <div class="grid-4">
-          <div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक</div></div>
+          <div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक (डुप्लिकेटमुक्त)</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--amber);">+1 / -0.25 गुण</div><div class="stat-lbl">MPSC पूर्व परीक्षा पॅटर्न</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div>
@@ -1874,7 +1963,7 @@
 
     function renderMistakesTab() {
       const mistakeQs = appState.questions.filter(q => appState.mistakes.includes(q.id)), bookmarkQs = appState.questions.filter(q => appState.bookmarks.includes(q.id));
-      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;"><div><h2 class="card-title">📌 चुकलेले व बुकमार्क केलेले प्रश्न</h2><p class="card-sub" style="margin-bottom:0;">परीक्षेत चुकलेले प्रश्न येथे जमा होतात जेणेकरून तुम्ही पुन्हा सराव करू शकाल.</p></div>${mistakeQs.length ? `<button class="btn btn-rose btn-sm" onclick="startExamByKey('mistakes')">चुकलेले प्रश्न रिव्हिजन (${mistakeQs.length})</button>` : ""}</div><h3 style="font-size:15px;font-weight:800;margin:16px 0 8px;">चुकलेले प्रश्न (${mistakeQs.length})</h3>${mistakeQs.length ? mistakeQs.map(q => `<div class="stat-box" style="margin-bottom:8px;"><span class="badge badge-rose">${q.subject}</span> <span class="badge badge-blue">${q.topic}</span><div style="font-weight:700;margin:4px 0;">${q.question_mr}</div><div style="font-size:12px;color:var(--emerald);">उत्तर: ${q.options[q.answer]} • ${q.explanation_mr}</div></div>`).join("") : `<p style="font-size:13px;color:var(--muted);">अद्याप कोणताही प्रश्न चुकलेला नाही.</p>`}<h3 style="font-size:15px;font-weight:800;margin:16px 0 8px;">बुकमार्क प्रश्न (${bookmarkQs.length})</h3>${bookmarkQs.length ? bookmarkQs.map(q => `<div class="stat-box" style="margin-bottom:8px;"><span class="badge badge-amber">${q.subject}</span><div style="font-weight:700;margin:4px 0;">${q.question_mr}</div><div style="font-size:12px;color:var(--muted);">उत्तर: ${q.options[q.answer]}</div></div>`).join("") : `<p style="font-size:13px;color:var(--muted);">कोणताही प्रश्न बुकमार्क केलेला नाही.</p>`}</div>`;
+      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;"><div><h2 class="card-title">📌 चुकलेले व बुकमार्क केलेले प्रश्न</h2><p class="card-sub" style="margin-bottom:0;">परीक्षेत चुकलेले प्रश्न येथे जमा होतात जेणेकरून तुम्ही पुन्हा सराव करू शकाल.</p></div>${mistakeQs.length ? `<button class="btn btn-rose btn-sm" onclick="startExamByKey('mistakes')">चुकलेले प्रश्न रिव्हिजन (${mistakeQs.length})</button>` : ""}</div><h3 style="font-size:15px;font-weight:800;margin:16px 0 8px;">चुकलेले प्रश्न (${mistakeQs.length})</h3>${mistakeQs.length ? mistakeQs.map(q => `<div class="stat-box" style="margin-bottom:8px;"><span class="badge badge-rose">${q.subject}</span> <span class="badge badge-blue">${q.topic}</span><div style="font-weight:700;margin:4px 0;">${repairDevanagariText(q.question_mr)}</div><div style="font-size:12px;color:var(--emerald);">उत्तर: ${repairDevanagariText(q.options[q.answer])} • ${repairDevanagariText(q.explanation_mr)}</div></div>`).join("") : `<p style="font-size:13px;color:var(--muted);">अद्याप कोणताही प्रश्न चुकलेला नाही.</p>`}<h3 style="font-size:15px;font-weight:800;margin:16px 0 8px;">बुकमार्क प्रश्न (${bookmarkQs.length})</h3>${bookmarkQs.length ? bookmarkQs.map(q => `<div class="stat-box" style="margin-bottom:8px;"><span class="badge badge-amber">${q.subject}</span><div style="font-weight:700;margin:4px 0;">${repairDevanagariText(q.question_mr)}</div><div style="font-size:12px;color:var(--muted);">उत्तर: ${repairDevanagariText(q.options[q.answer])}</div></div>`).join("") : `<p style="font-size:13px;color:var(--muted);">कोणताही प्रश्न बुकमार्क केलेला नाही.</p>`}</div>`;
     }
 
     function renderPdfsTab() {
@@ -1960,10 +2049,206 @@
       return `<div class="card"><h2 class="card-title">🏆 गुणवत्ता यादी (Leaderboard)</h2><p class="card-sub">तुमचे गुण आणि अचूकता यादीत नोंदवली जाते.</p><table><thead><tr><th>क्र.</th><th>विद्यार्थी</th><th>जिल्हा</th><th>चाचणी</th><th>गुण</th><th>अचूकता</th></tr></thead><tbody>${sorted.map((row, i) => `<tr><td><strong>#${i + 1}</strong></td><td>${row.student_name}</td><td>${row.district}</td><td>${row.mode}</td><td><strong>${row.score} / ${row.total}</strong></td><td>${row.accuracy}%</td></tr>`).join("")}</tbody></table></div>`;
     }
 
+    /* Smart Admin KPI & Filtering helpers */
+    function getAdminStats() {
+      const passList = Object.values(appState.passcodes || {});
+      const activePass = passList.filter(p => p.active !== false).length;
+      const revokedPass = passList.filter(p => p.active === false).length;
+      const lockedPass = passList.filter(p => !!p.device_id).length;
+
+      const subjCounts = {};
+      MPSC_SUBJECTS.forEach(s => subjCounts[s.key] = 0);
+      const uniqueTextSet = new Set();
+      let dupCount = 0;
+
+      appState.questions.forEach(q => {
+        if (Object.prototype.hasOwnProperty.call(subjCounts, q.subject)) subjCounts[q.subject]++;
+        const k = normalizeMatchKeyText(q.question_mr);
+        if (k) {
+          if (uniqueTextSet.has(k)) dupCount++;
+          else uniqueTextSet.add(k);
+        }
+      });
+
+      return { totalPass: passList.length, activePass, revokedPass, lockedPass, totalQ: appState.questions.length, dupCount, subjCounts };
+    }
+
     function renderAdminTab() {
       if (!appState.isAdminAuthenticated) return `<div class="card"><p>कृपया प्रथम Admin लॉगिन करा.</p><button class="btn btn-primary" onclick="openAdminGate()">Admin Login</button></div>`;
-      const aTab = appState.adminTab || "passcodes", passList = Object.values(appState.passcodes);
-      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;"><div><span class="badge badge-rose">ADMIN PORTAL</span><h2 class="card-title" style="margin-top:4px;">प्रशासन डॅशबोर्ड — MPSC Sarav 2026-27</h2></div><button class="btn btn-sm" onclick="appState.isAdminAuthenticated=false;appState.activeTab='dashboard';saveState();renderAll();">लॉगआउट</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"><button class="btn btn-sm ${aTab==='passcodes'?'btn-primary':''}" onclick="appState.adminTab='passcodes';renderAll();">🔐 Passcodes & 1-Device Lock</button><button class="btn btn-sm ${aTab==='json'?'btn-primary':''}" onclick="appState.adminTab='json';renderAll();">📥 JSON & GitHub Loader</button><button class="btn btn-sm ${aTab==='pdfs'?'btn-primary':''}" onclick="appState.adminTab='pdfs';renderAll();">📄 PDFs & Cleanup</button><button class="btn btn-sm ${aTab==='cloud'?'btn-primary':''}" onclick="appState.adminTab='cloud';renderAll();">☁️ Cloud & Admin Password</button></div>${aTab === "passcodes" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3><div class="grid-4" style="margin-bottom:8px;"><input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. MAYURI2000)" /><input id="newPassMobile" name="newPassMobile" class="input" placeholder="विद्यार्थी मोबाइल (पर्यायी)" /><input id="newPassCode" name="newPassCode" class="input" placeholder="Passcode (रिकामे सोडल्यास ऑटो तयार होईल)" /><button class="btn btn-primary" onclick="createSingleDevicePasscode()">+ Passcode तयार करा</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" onclick="exportPasscodesJson()">💾 Passcodes JSON डाउनलोड करा</button><button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes घ्या</button><button class="btn btn-sm btn-primary" onclick="syncAllPasscodesToCloud()">⬆ सर्व Passcodes Cloud वर पाठवा</button></div></div><table><thead><tr><th>Passcode</th><th>Student ID</th><th>मोबाइल</th><th>Locked Device ID</th><th>स्थिती</th><th>पाठवा व क्रिया</th></tr></thead><tbody>${passList.map(p => `<tr><td><strong>${p.code}</strong></td><td>${p.student_id}</td><td>${p.mobile || "-"}</td><td><code>${p.device_id || "अद्याप लॉक नाही"}</code></td><td><span class="badge ${p.active ? "badge-green" : "badge-rose"}">${p.active ? "ACTIVE" : "REVOKED"}</span></td><td style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-wa btn-sm" onclick="sendPasscodeWhatsApp('${p.code}')">💬 WhatsApp</button><button class="btn btn-accent btn-sm" onclick="sendPasscodeSms('${p.code}')">✉️ Text SMS</button><button class="btn btn-sm" onclick="copyText('Student ID: ${p.student_id} | Passcode: ${p.code}', 'Passcode तपशील कॉपी केले')">कॉपी</button><button class="btn btn-sm" onclick="resetPasscodeDevice('${p.code}')">Device Reset</button><button class="btn btn-sm" onclick="togglePasscodeActive('${p.code}')">${p.active ? "Revoke" : "Activate"}</button></td></tr>`).join("")}</tbody></table>` : ""}${aTab === "json" ? `<div class="grid-2" style="margin-bottom:14px;"><div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">PYQ JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'pyq')" /></div><div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">नवीन प्रश्न JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'new')" /></div></div><div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 6px;font-size:15px;">GitHub वरून थेट JSON URL लोड करा</h3><div class="grid-2"><input id="githubJsonUrlInput" name="githubJsonUrlInput" class="input" placeholder="https://raw.githubusercontent.com/.../questions.json" /><button class="btn btn-accent" onclick="loadJsonFromGithubUrl(document.getElementById('githubJsonUrlInput').value, null)">GitHub वरून लोड करा</button></div></div><div class="stat-box" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा अक्षर स्वच्छ व वर्गवारी करा</button><button class="btn btn-sm btn-rose" onclick="resetSavedQuestions()">↺ ब्राउझरमधील सेव्ह प्रश्न साफ करून 10 सॅम्पल ठेवा</button></div>` : ""}${aTab === "pdfs" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;">न उघडणारे PDFs स्वच्छ करा व नवीन Paper PDF जोडा</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><button class="btn btn-rose btn-sm" onclick="checkAndRemoveBrokenPdfs()">🧹 सर्व PDF लिंक्स तपासून न उघडणारे काढून टाका</button><button class="btn btn-sm" onclick="restoreRemovedPdfs()">↺ काढलेले PDFs पुन्हा आणा (${(appState.removedPdfKeys || []).length})</button></div><div class="grid-2" style="margin-bottom:8px;"><input id="pdfTitleInput" name="pdfTitleInput" class="input" placeholder="पेपरचे नाव" /><input id="pdfYearInput" name="pdfYearInput" class="input" placeholder="वर्ष (उदा. 2025)" /><select id="pdfAccessInput" name="pdfAccessInput" class="select"><option value="free">Free</option><option value="pro">Pro (₹199/yr)</option></select><input id="pdfUrlInput" name="pdfUrlInput" class="input" placeholder="PDF / Google Drive / GitHub लिंक" /></div><button class="btn btn-primary btn-sm" onclick="addPdfEntry()">+ PDF सेव्ह करा</button></div><table><thead><tr><th>शीर्षक</th><th>वर्ष</th><th>प्रकार</th><th>लिंक</th><th>क्रिया</th></tr></thead><tbody>${appState.pdfs.map(pdf => `<tr><td><strong>${pdf.title}</strong></td><td>${pdf.year}</td><td>${pdf.access_type === "pro" ? "PRO" : "FREE"}</td><td><a href="${pdf.file_url}" target="_blank" rel="noopener">उघडा</a></td><td><button class="btn btn-sm btn-rose" onclick="deletePdfEntry('${pdf.id}')">काढा</button></td></tr>`).join("")}</tbody></table>` : ""}${aTab === "cloud" ? `<div class="stat-box" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync</h3><div class="grid-2" style="margin-bottom:8px;"><input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" /><input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" /></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="saveSupabaseConfig()">सेव्ह करा</button><button class="btn btn-sm btn-accent" onclick="syncQuestionsToCloud()">⬆ प्रश्न Cloud वर Sync करा</button><button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (25,000 मर्यादा)</button></div></div><div class="stat-box"><h3 style="margin:0 0 8px;font-size:15px;">Admin पासवर्ड बदला</h3><div class="grid-3"><input type="password" id="newAdminPass1" name="newAdminPass1" class="input" placeholder="नवीन Admin पासवर्ड" /><input type="password" id="newAdminPass2" name="newAdminPass2" class="input" placeholder="नवीन पासवर्ड पुन्हा टाका" /><button class="btn btn-amber" onclick="changeAdminPassword()">पासवर्ड बदला</button></div></div>` : ""}</div>`;
+      const aTab = appState.adminTab || "passcodes";
+      const stats = getAdminStats();
+      const searchQ = (appState.passcodeSearch || "").trim().toUpperCase();
+      const statusFilter = appState.passcodeStatusFilter || "ALL";
+
+      const passList = Object.values(appState.passcodes).filter(p => {
+        if (statusFilter === "ACTIVE" && p.active === false) return false;
+        if (statusFilter === "REVOKED" && p.active !== false) return false;
+        if (statusFilter === "LOCKED" && !p.device_id) return false;
+        if (searchQ) {
+          const hay = `${p.code || ""} ${p.student_id || ""} ${p.mobile || ""} ${p.device_id || ""}`.toUpperCase();
+          if (!hay.includes(searchQ)) return false;
+        }
+        return true;
+      });
+
+      return `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div>
+              <span class="badge badge-rose">SMART ADMIN PORTAL</span>
+              <h2 class="card-title" style="margin-top:4px;">प्रशासन डॅशबोर्ड — MPSC Sarav 2026-27</h2>
+            </div>
+            <button class="btn btn-sm" onclick="appState.isAdminAuthenticated=false;appState.activeTab='dashboard';saveState();renderAll();">लॉगआउट</button>
+          </div>
+
+          <!-- Smart KPI Summary Row -->
+          <div class="grid-4" style="margin-bottom:14px;">
+            <div class="stat-box">
+              <div class="stat-num">${stats.totalQ}</div>
+              <div class="stat-lbl">एकूण प्रश्न (डुप्लिकेट: ${stats.dupCount})</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num" style="color:var(--emerald);">${stats.activePass} / ${stats.totalPass}</div>
+              <div class="stat-lbl">सक्रिय Passcodes (Revoked: ${stats.revokedPass})</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num" style="color:var(--accent);">${stats.lockedPass}</div>
+              <div class="stat-lbl">Device-Locked Passcodes</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num" style="color:var(--amber);">₹199 / yr</div>
+              <div class="stat-lbl">वार्षिक Pro प्लॅन</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="btn btn-sm ${aTab==='passcodes'?'btn-primary':''}" onclick="appState.adminTab='passcodes';renderAll();">🔐 Passcodes & 1-Device Lock</button>
+            <button class="btn btn-sm ${aTab==='json'?'btn-primary':''}" onclick="appState.adminTab='json';renderAll();">📥 JSON & Data Health</button>
+            <button class="btn btn-sm ${aTab==='pdfs'?'btn-primary':''}" onclick="appState.adminTab='pdfs';renderAll();">📄 PDFs & Cleanup</button>
+            <button class="btn btn-sm ${aTab==='cloud'?'btn-primary':''}" onclick="appState.adminTab='cloud';renderAll();">☁️ Cloud & Admin Password</button>
+          </div>
+
+          ${aTab === "passcodes" ? `
+            <div class="stat-box" style="margin-bottom:14px;">
+              <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3>
+              <div class="grid-4" style="margin-bottom:8px;">
+                <input id="newPassStudentId" name="newPassStudentId" class="input" placeholder="Student ID (उदा. MAYURI2000)" />
+                <input id="newPassMobile" name="newPassMobile" class="input" placeholder="विद्यार्थी मोबाइल (10 अंक)" />
+                <input id="newPassCode" name="newPassCode" class="input" placeholder="Passcode (रिकामे सोडल्यास ऑटो तयार होईल)" />
+                <button class="btn btn-primary" onclick="createSingleDevicePasscode()">+ Passcode तयार करा</button>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm" onclick="exportPasscodesJson()">💾 Passcodes JSON डाउनलोड करा</button>
+                <button class="btn btn-sm btn-accent" onclick="pullPasscodesFromCloud().then(()=>renderAll())">☁️ Cloud वरून Passcodes घ्या</button>
+                <button class="btn btn-sm btn-primary" onclick="syncAllPasscodesToCloud()">⬆ सर्व Passcodes Cloud वर पाठवा</button>
+              </div>
+            </div>
+
+            <!-- Smart Search & Status Filter for Passcodes -->
+            <div class="stat-box" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-sm ${statusFilter==='ALL'?'btn-primary':''}" onclick="appState.passcodeStatusFilter='ALL';saveState();renderAll();">सर्व (${stats.totalPass})</button>
+                <button class="btn btn-sm ${statusFilter==='ACTIVE'?'btn-accent':''}" onclick="appState.passcodeStatusFilter='ACTIVE';saveState();renderAll();">ACTIVE (${stats.activePass})</button>
+                <button class="btn btn-sm ${statusFilter==='LOCKED'?'btn-amber':''}" onclick="appState.passcodeStatusFilter='LOCKED';saveState();renderAll();">DEVICE LOCKED (${stats.lockedPass})</button>
+                <button class="btn btn-sm ${statusFilter==='REVOKED'?'btn-rose':''}" onclick="appState.passcodeStatusFilter='REVOKED';saveState();renderAll();">REVOKED (${stats.revokedPass})</button>
+              </div>
+              <input class="input" style="width:230px;" value="${appState.passcodeSearch || ""}" placeholder="Student ID / Passcode / Device शोधा" oninput="appState.passcodeSearch=this.value;renderAll();" />
+            </div>
+
+            <table>
+              <thead><tr><th>Passcode</th><th>Student ID</th><th>मोबाइल</th><th>Locked Device ID</th><th>स्थिती</th><th>पाठवा व क्रिया</th></tr></thead>
+              <tbody>
+                ${passList.length ? passList.map(p => `
+                  <tr>
+                    <td><strong>${p.code}</strong></td>
+                    <td>${p.student_id}</td>
+                    <td>${p.mobile || "-"}</td>
+                    <td><code>${p.device_id || "अद्याप लॉक नाही"}</code></td>
+                    <td><span class="badge ${p.active !== false ? "badge-green" : "badge-rose"}">${p.active !== false ? "ACTIVE" : "REVOKED"}</span></td>
+                    <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <button class="btn btn-wa btn-sm" onclick="sendPasscodeWhatsApp('${p.code}')">💬 WhatsApp</button>
+                      <button class="btn btn-accent btn-sm" onclick="sendPasscodeSms('${p.code}')">✉️ Text SMS</button>
+                      <button class="btn btn-sm" onclick="copyText('Student ID: ${p.student_id} | Passcode: ${p.code}', 'Passcode तपशील कॉपी केले')">कॉपी</button>
+                      <button class="btn btn-sm" onclick="resetPasscodeDevice('${p.code}')">Device Reset</button>
+                      <button class="btn btn-sm" onclick="togglePasscodeActive('${p.code}')">${p.active !== false ? "Revoke" : "Activate"}</button>
+                    </td>
+                  </tr>
+                `).join("") : `<tr><td colspan="6" style="color:var(--muted);">निवडलेल्या निकषानुसार Passcode आढळला नाही.</td></tr>`}
+              </tbody>
+            </table>
+          ` : ""}
+
+          ${aTab === "json" ? `
+            <div class="grid-2" style="margin-bottom:14px;">
+              <div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">PYQ JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'pyq')" /></div>
+              <div class="stat-box"><h3 style="margin:0 0 6px;font-size:15px;">नवीन प्रश्न JSON फाइल अपलोड</h3><input type="file" accept=".json" onchange="handleJsonFileUpload(event, 'new')" /></div>
+            </div>
+            <div class="stat-box" style="margin-bottom:14px;">
+              <h3 style="margin:0 0 6px;font-size:15px;">GitHub वरून थेट JSON URL लोड करा</h3>
+              <div class="grid-2"><input id="githubJsonUrlInput" name="githubJsonUrlInput" class="input" placeholder="https://raw.githubusercontent.com/.../questions.json" /><button class="btn btn-accent" onclick="loadJsonFromGithubUrl(document.getElementById('githubJsonUrlInput').value, null)">GitHub वरून लोड करा</button></div>
+            </div>
+            <div class="stat-box" style="margin-bottom:14px;">
+              <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">Smart Data Health & Cleanup</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-rose" onclick="cleanDuplicateQuestionsNow()">🧹 डुप्लिकेट प्रश्न काढून टाका (${stats.dupCount})</button>
+                <button class="btn btn-sm btn-primary" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा अक्षर स्वच्छ व वर्गवारी करा</button>
+                <button class="btn btn-sm" onclick="resetSavedQuestions()">↺ ब्राउझरमधील सेव्ह प्रश्न साफ करून 10 सॅम्पल ठेवा</button>
+              </div>
+            </div>
+            <div class="stat-box">
+              <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">विषयनिहाय प्रश्न संख्या तपासणी</h3>
+              <table>
+                <thead><tr><th>विषय</th><th>प्रश्न संख्या</th></tr></thead>
+                <tbody>${MPSC_SUBJECTS.map(s => `<tr><td><strong>${s.key}</strong></td><td>${stats.subjCounts[s.key] || 0}</td></tr>`).join("")}</tbody>
+              </table>
+            </div>
+          ` : ""}
+
+          ${aTab === "pdfs" ? `
+            <div class="stat-box" style="margin-bottom:14px;">
+              <h3 style="margin:0 0 8px;font-size:15px;">न उघडणारे PDFs स्वच्छ करा व नवीन Paper PDF जोडा</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                <button class="btn btn-rose btn-sm" onclick="checkAndRemoveBrokenPdfs()">🧹 सर्व PDF लिंक्स तपासून न उघडणारे काढून टाका</button>
+                <button class="btn btn-sm" onclick="restoreRemovedPdfs()">↺ काढलेले PDFs पुन्हा आणा (${(appState.removedPdfKeys || []).length})</button>
+              </div>
+              <div class="grid-2" style="margin-bottom:8px;">
+                <input id="pdfTitleInput" name="pdfTitleInput" class="input" placeholder="पेपरचे नाव" />
+                <input id="pdfYearInput" name="pdfYearInput" class="input" placeholder="वर्ष (उदा. 2025)" />
+                <select id="pdfAccessInput" name="pdfAccessInput" class="select"><option value="free">Free</option><option value="pro">Pro (₹199/yr)</option></select>
+                <input id="pdfUrlInput" name="pdfUrlInput" class="input" placeholder="PDF / Google Drive / GitHub लिंक" />
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addPdfEntry()">+ PDF सेव्ह करा</button>
+            </div>
+            <table>
+              <thead><tr><th>शीर्षक</th><th>वर्ष</th><th>प्रकार</th><th>लिंक</th><th>क्रिया</th></tr></thead>
+              <tbody>${appState.pdfs.map(pdf => `<tr><td><strong>${pdf.title}</strong></td><td>${pdf.year}</td><td>${pdf.access_type === "pro" ? "PRO" : "FREE"}</td><td><a href="${pdf.file_url}" target="_blank" rel="noopener">उघडा</a></td><td><button class="btn btn-sm btn-rose" onclick="deletePdfEntry('${pdf.id}')">काढा</button></td></tr>`).join("")}</tbody>
+            </table>
+          ` : ""}
+
+          ${aTab === "cloud" ? `
+            <div class="stat-box" style="margin-bottom:14px;">
+              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync</h3>
+              <div class="grid-2" style="margin-bottom:8px;">
+                <input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" />
+                <input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" />
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-primary" onclick="saveSupabaseConfig()">सेव्ह करा</button>
+                <button class="btn btn-sm btn-accent" onclick="syncQuestionsToCloud()">⬆ प्रश्न Cloud वर Sync करा</button>
+                <button class="btn btn-sm" onclick="pullQuestionsFromCloud()">⬇ Cloud वरून प्रश्न घ्या (25,000 मर्यादा)</button>
+              </div>
+            </div>
+            <div class="stat-box">
+              <h3 style="margin:0 0 8px;font-size:15px;">Admin पासवर्ड बदला</h3>
+              <div class="grid-3">
+                <input type="password" id="newAdminPass1" name="newAdminPass1" class="input" placeholder="नवीन Admin पासवर्ड" />
+                <input type="password" id="newAdminPass2" name="newAdminPass2" class="input" placeholder="नवीन पासवर्ड पुन्हा टाका" />
+                <button class="btn btn-amber" onclick="changeAdminPassword()">पासवर्ड बदला</button>
+              </div>
+            </div>
+          ` : ""}
+        </div>
+      `;
     }
 
     function saveSupabaseConfig() { appState.supabaseUrl = document.getElementById("sbUrlInput").value.trim(); appState.supabaseKey = document.getElementById("sbKeyInput").value.trim(); saveState(); checkCloudConnection(); showToast("Supabase सेटिंग्ज सेव्ह केली."); }
@@ -1991,7 +2276,7 @@
       loadPortalPdfCatalog(false);
       const stored = await loadQuestionsChunked();
       if (Array.isArray(stored) && stored.length > 10) {
-        appState.questions = stored.map((q, i) => normalizeQuestion(q, i));
+        appState.questions = deduplicateQuestionsList(stored.map((q, i) => normalizeQuestion(q, i)));
         renderAll();
       } else {
         await silentPullFromCloud();
