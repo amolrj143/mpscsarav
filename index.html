@@ -19,12 +19,12 @@
       --shadow:0 10px 28px -8px rgba(15,23,42,.10),0 2px 6px -1px rgba(15,23,42,.04);
     }
     * { box-sizing:border-box; }
-    body { margin:0;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink);line-height:1.72;overflow-x:hidden;text-rendering:optimizeLegibility;font-feature-settings:"kern" 1,"liga" 1,"mark" 1,"mkmk" 1; }
+    body { margin:0;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink);line-height:1.74;overflow-x:hidden;text-rendering:optimizeLegibility;font-feature-settings:"kern" 1,"liga" 1,"mark" 1,"mkmk" 1; }
     button,input,select,textarea { font-family:inherit;max-width:100%; }
     .container { max-width:1240px;margin:0 auto;padding:0 14px; }
 
     .promo-ticker {
-      background:linear-gradient(90deg,#111827 0%,#1d4ed8 50%,#0f766e 100%);
+      background:linear-gradient(90deg,#0f172a 0%,#1d4ed8 50%,#0f766e 100%);
       color:#fff;font-size:12px;font-weight:700;padding:7px 0;text-align:center;
       border-bottom:1px solid rgba(255,255,255,.12);
     }
@@ -122,15 +122,20 @@
     .pal-btn.answered { background:var(--emerald);color:#fff;border-color:var(--emerald); }
     .pal-btn.current { outline:2.5px solid var(--primary); }
 
-    .exp-box { background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px; }
-    .exp-step { margin:4px 0;color:#1e293b; }
+    .exp-box { background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:12px 14px;margin-top:8px;font-size:13px; }
+    .exp-step { margin:5px 0;color:#1e293b; }
+
+    .marketing-strip {
+      background:linear-gradient(120deg,#fef3c7 0%,#eff6ff 55%,#ecfdf5 100%);
+      border:1px solid #fcd34d;border-radius:14px;padding:14px 16px;margin-top:14px;
+    }
 
     table { width:100%;border-collapse:collapse;font-size:13px; }
     th,td { padding:10px;border-bottom:1px solid var(--line);text-align:left; }
     th { background:var(--surface-alt);font-weight:800; }
     .modal-backdrop { position:fixed;inset:0;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;padding:16px;z-index:60; }
     .modal-backdrop.open { display:flex; }
-    .modal-card { background:var(--surface);border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.35); }
+    .modal-card { background:var(--surface);border-radius:16px;max-width:620px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.35); }
     .footer { background:var(--surface);border-top:1px solid var(--line);padding:16px 0;font-size:12px;color:var(--muted); }
     .footer-row { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
     .admin-link { background:transparent;border:1px dashed var(--line);color:var(--muted);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer; }
@@ -141,7 +146,7 @@
 </head>
 <body>
   <div class="promo-ticker">
-    🚀 MPSC गट-क (Group C) 2026-27 संपूर्ण तयारी — एकच <span class="highlight">PRO ₹199 / वर्ष</span> प्लॅन घ्या आणि सर्व प्रश्न बँक, मुख्य पेपर्स व सर्व PDFs अनलॉक करा!
+    🚀 MPSC गट-क (Group C) 2026-27 संपूर्ण तयारी — एकच <span class="highlight">PRO ₹199 / वर्ष</span> प्लॅन घ्या (फक्त ~₹0.55/दिवस) आणि सर्व पेपर सेट्स व PDFs अनलॉक करा!
   </div>
 
   <header class="topbar">
@@ -195,7 +200,7 @@
       <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 डॅशबोर्ड व डेमो पेपर्स</button>
       <button class="tab-btn" data-tab="pre" onclick="switchTab('pre')">📝 पूर्व व Year-wise PYQ</button>
       <button class="tab-btn" data-tab="mains" onclick="switchTab('mains')">📚 मुख्य परीक्षा (Paper 1 & 2)</button>
-      <button class="tab-btn" data-tab="topics" onclick="switchTab('topics')">🎯 विषय व घटक (20 प्रश्न)</button>
+      <button class="tab-btn" data-tab="topics" onclick="switchTab('topics')">🎯 विषय व घटक सेट्स</button>
       <button class="tab-btn" data-tab="mistakes" onclick="switchTab('mistakes')">📌 चूक व बुकमार्क</button>
       <button class="tab-btn" data-tab="pdfs" onclick="switchTab('pdfs')">📄 PYQ पेपर PDFs</button>
       <button class="tab-btn" data-tab="leaderboard" onclick="switchTab('leaderboard')">🏆 गुणवत्ता यादी</button>
@@ -214,13 +219,40 @@
     </div>
   </footer>
 
+  <!-- Student Details & Pro Plan Form Modal -->
   <div class="modal-backdrop" id="proModal">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <h3 style="margin:0;font-size:19px;font-weight:800;">⭐ MPSC Sarav Pro — ₹199 / वर्ष (Direct UPI)</h3>
+        <h3 style="margin:0;font-size:19px;font-weight:800;">⭐ MPSC Sarav Pro — ₹199 / वर्ष (विद्यार्थी नोंदणी व Direct UPI)</h3>
         <button class="btn btn-sm" onclick="closeModal('proModal')">✕</button>
       </div>
-      <p style="font-size:13px;color:var(--muted);margin-top:0;">एकच <strong>₹199 / वर्ष</strong> Passcode सक्रिय करा — त्यातून <strong>सर्व प्रश्न बँक, मुख्य परीक्षा पेपर्स आणि सर्व PDFs</strong> एकत्रित अनलॉक होतात.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:0;">फक्त <strong>₹199 / वर्ष</strong> मध्ये सर्व विषय/घटक सेट्स, पूर्ण 100 गुणांचे पेपर्स आणि सर्व PDFs अनलॉक होतात (एकच Passcode = 1 Student ID + 1 Device).</p>
+
+      <!-- Step 0: Student Registration Form -> Sends WhatsApp message to 8554011484 & saves lead for Admin Passcode -->
+      <div class="stat-box" style="margin-bottom:14px;background:#eff6ff;border-color:#93c5fd;">
+        <div style="font-weight:800;font-size:14px;margin-bottom:6px;">पायरी ०: विद्यार्थी माहिती फॉर्म भरा (Admin Passcode साठी आवश्यक)</div>
+        <div class="grid-2" style="margin-bottom:8px;">
+          <input id="regStudentName" name="regStudentName" class="input" placeholder="पूर्ण नाव *" />
+          <input id="regStudentMobile" name="regStudentMobile" class="input" placeholder="WhatsApp / मोबाइल नंबर (10 अंक) *" />
+        </div>
+        <div class="grid-2" style="margin-bottom:8px;">
+          <input id="regStudentId" name="regStudentId" class="input" placeholder="इच्छित Student ID (उदा. STU105)" />
+          <select id="regStudentDistrict" name="regStudentDistrict" class="select">
+            <option value="नाशिक">नाशिक</option>
+            <option value="पुणे">पुणे</option>
+            <option value="छत्रपती संभाजीनगर">छत्रपती संभाजीनगर</option>
+            <option value="नागपूर">नागपूर</option>
+            <option value="ठाणे">ठाणे</option>
+            <option value="परभणी / जालना">परभणी / जालना</option>
+            <option value="बुलढाणा / नांदुरा">बुलढाणा / नांदुरा</option>
+            <option value="अहमदनगर">अहमदनगर</option>
+            <option value="कोल्हापूर">कोल्हापूर</option>
+            <option value="इतर जिल्हा">इतर जिल्हा</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-wa btn-sm" style="width:100%;" onclick="submitStudentRegistrationForm()">💬 माहिती सेव्ह करा व WhatsApp (8554011484) वर Pro प्लॅन मेसेज पाठवा</button>
+      </div>
+
       <div class="stat-box" style="margin-bottom:14px;background:#fffbeb;border-color:#fde68a;">
         <div style="font-weight:800;font-size:14px;margin-bottom:6px;">पायरी १: UPI तपशील व मोबाइलवर थेट UPI ॲप उघडा (₹199)</div>
         <div style="font-size:13px;margin-bottom:4px;"><strong>UPI नंबर:</strong> <span>8554011484</span> <button class="btn btn-sm" style="margin-left:6px;" onclick="copyText('8554011484','UPI नंबर कॉपी केला')">कॉपी</button></div>
@@ -233,6 +265,7 @@
         </div>
         <div style="font-size:11px;color:var(--muted);">* मोबाइल ब्राउझरवरून क्लिक केल्यावर संबंधित UPI ॲप थेट उघडते. डेस्कटॉपवर UPI ॲप नसल्यास UPI ID कॉपी करून पेमेंट करा.</div>
       </div>
+
       <div class="stat-box" style="margin-bottom:14px;">
         <div style="font-weight:800;font-size:14px;margin-bottom:6px;">पायरी २: UTR / पेमेंट पुराव्यासह WhatsApp वर पाठवा</div>
         <div class="grid-2" style="margin-bottom:8px;">
@@ -241,15 +274,13 @@
         </div>
         <button type="button" class="btn btn-wa btn-sm" style="width:100%;" onclick="sendPaymentProofWhatsApp()">💬 WhatsApp (8554011484) वर पेमेंट व UTR पाठवा</button>
       </div>
+
       <div style="font-weight:700;font-size:13px;margin-bottom:6px;">पायरी ३: Admin कडून मिळालेला 1 Passcode = 1 Student ID + 1 Device सक्रिय करा</div>
       <div class="grid-2" style="margin-bottom:10px;">
         <input id="modalStudentId" name="modalStudentId" class="input" placeholder="तुमचा Student ID (उदा. STU101)" />
         <input id="modalPasscode" name="modalPasscode" class="input" placeholder="तुमचा Passcode" />
       </div>
       <button type="button" class="btn btn-primary" style="width:100%;" onclick="activateFromModal()">✅ Passcode व Device Lock सक्रिय करा</button>
-      <div style="margin-top:10px;text-align:center;">
-        <button type="button" class="btn btn-wa btn-sm" style="width:100%;" onclick="openWhatsAppInquiry()">❓ कोणतीही Query / Inquiry साठी WhatsApp वर Admin ला संपर्क करा (8554011484)</button>
-      </div>
     </div>
   </div>
 
@@ -390,9 +421,56 @@
       window.location.href = targetUrl;
     }
 
-    /* Comprehensive Devanagari & Marathi OCR Broken-Character Repair Engine (Screenshot 271-275 patterns included) */
+    /* Deep Marathi & Devanagari Broken-Character Repair Engine (Screens 271-282 patterns covered) */
     const DEVANAGARI_REPAIRS = [
-      // Broken letter 'म' -> 'म्ह' / 'म' artifacts seen in screenshots (म्म्हणून -> म्हणून, म्म्हणजे -> म्हणजे)
+      // Fix broken Marathi words in Screenshots 277-282
+      [/पुर\s*कार/g, "पुरस्कार"],
+      [/करणा\s*या/g, "करणाऱ्या"],
+      [/वधेिकास/g, "विधेयकास"],
+      [/पा\s*ठबा/g, "पाठिंबा"],
+      [/यासाठ\s*ल\s*हले/g, "यासाठी लिहिले"],
+      [/गेलेले\s*स\s*नाटक/g, "गेलेले नाटक"],
+      [/णय\s*भाव/g, "प्रणय भाव"],
+      [/लोकमं\s*याचा/g, "लोकमान्यांचा"],
+      [/ल\s*नाची\s*बेडी/g, "लग्नाची बेडी"],
+
+      // Screenshot 278: "2018 या ‘प भूषण’ पुर काराबाबत जो लावा:े (a) आर. नागा वा मी (i) सा ह य– श ण (b) वेद काश नंदा (ii) कला – संगीत (c) अर वद पा रख (iii) पुरात वशा (d) ल मण पै (iv) कला – रंग च कला ... पर्यायी उ रे"
+      [/‘प\s*भूषण’/g, "‘पद्मभूषण’"],
+      [/जो\s*लावा:े/g, "जोड्या लावा:"],
+      [/नागा\s*वा\s*मी/g, "नागास्वामी"],
+      [/सा\s*ह\s*य–\s*श\s*ण/g, "साहित्य व शिक्षण"],
+      [/वेद\s*काश\s*नंदा/g, "वेदप्रकाश नंदा"],
+      [/अर\s*वद\s*पा\s*रख/g, "अरविंद पारेख"],
+      [/पुरात\s*वशा/g, "पुरातत्त्वशास्त्र"],
+      [/ल\s*मण\s*पै/g, "लक्ष्मण पै"],
+      [/कला\s*–\s*रंग\s*च\s*कला/g, "कला - चित्रकला"],
+      [/पर्यायी\s*उ\s*रे/g, "पर्यायी उत्तरे"],
+
+      // Screenshot 279: "आय पी अॅस 127.0.0.1 हा _______ कारचा आय पी अॅस आहे. (A) लमीटे डॉडका ट अॅस (B) लूप बॅक अॅस (C) म ट का ट अॅस (D) डायरे टॉडका ट अॅस"
+      [/आय\s*पी\s*अॅस/g, "आयपी ॲड्रेस"],
+      [/कारचा/g, "प्रकारचा"],
+      [/लमीटे\s*डॉडका\s*ट\s*अॅस/g, "लिमिटेड ब्रॉडकास्ट ॲड्रेस"],
+      [/लूप\s*बॅक\s*अॅस/g, "लूपबॅक ॲड्रेस"],
+      [/म\s*ट\s*का\s*ट\s*अॅस/g, "मल्टीकास्ट ॲड्रेस"],
+      [/डायरे\s*टॉडका\s*ट\s*अॅस/g, "डायरेक्ट ब्रॉडकास्ट ॲड्रेस"],
+
+      // Screenshot 280: "आंतररक कीड म्म्हणजे काय?"
+      [/आंतररक\s*कीड/g, "अंतर्गत कीड"],
+
+      // Screenshot 281: "'सस्टेनेबल इंटरनॅशनल फायनान्स्टिंग स्कीम' ... (C) ्रिक्स (D) साकय"
+      [/फायनान्स्टिंग/g, "फायनान्सिंग"],
+      [/्रिक्स/g, "ब्रिक्स"],
+      [/साकय/g, "सार्क"],
+
+      // Screenshot 282: "प्र. 2: खालील आकृ तीचे नरी ण क न खालीलपैक कोण या मूळा रांनी चं ाचा तीन चतुथांश भाग का शत दश वला आहे हे नमूद करा?"
+      [/आकृ\s*तीचे/g, "आकृतीचे"],
+      [/नरी\s*ण\s*क\s*न/g, "निरीक्षण करून"],
+      [/खालीलपैक\s*कोण/g, "खालीलपैकी कोणता"],
+      [/मूळा\s*रांनी\s*चं\s*ाचा/g, "मूलाक्षरांनी अंशाचा"],
+      [/का\s*शत\s*दश\s*वला\s*आहे/g, "काळ्या रंगाने दर्शवला आहे"],
+      [/बहाल\s*के\s*ला\s*होता/g, "बहाल केला होता"],
+
+      // Earlier screenshots 271-276 patterns
       [/म्म्हणून/g, "म्हणून"],
       [/म्म्हणजे/g, "म्हणजे"],
       [/म्म्हणतात/g, "म्हणतात"],
@@ -405,10 +483,6 @@
       [/अॅव्हॉडय/g, "अवॉर्ड"],
       [/अॅवॉर्डय/g, "अवॉर्ड"],
       [/अॅवॉड/g, "अवॉर्ड"],
-      [/टेनिस/g, "टेनिस"],
-      [/व्हीलचेअर/g, "व्हीलचेअर"],
-      [/हॉल\s*ऑफ\s*फेम/g, "हॉल ऑफ फेम"],
-      // Screenshot 273: "सहाआदे शक अंतराळ शै णक का या सामंज य करारावर _______ येथे _______ रोजी वा री कर यात आली."
       [/सहाआदे\s*शक/g, "सहादेश"],
       [/शै\s*णक/g, "शैक्षणिक"],
       [/सामंज\s*य/g, "सामंजस्य"],
@@ -416,7 +490,6 @@
       [/नो\s*हबर/g, "नोव्हेंबर"],
       [/इसबर/g, "डिसेंबर"],
       [/बंगलोर/g, "बेंगळुरू"],
-      // Screenshot 274: "पिग्मी लोकांचे खालीलपैकी कोणते शारीररक वैशिष्ठे बरोबर आहेत? अ. ते जा उंचीचे असतात ब. त्यांचा वणत पिवळसर असतो क. त्यांचे नाक चपटे असते ड. त्यांचे ओठ बारीक असतात"
       [/शारीररक/g, "शारीरिक"],
       [/वैशिष्ठे/g, "वैशिष्ट्ये"],
       [/वैशिष्ट्ट्ये/g, "वैशिष्ट्ये"],
@@ -429,12 +502,10 @@
       [/जा\s+लांबीच्या/g, "जास्त लांबीच्या"],
       [/जा\s+प्रमाणात/g, "जास्त प्रमाणात"],
       [/जा\s+वेगाने/g, "जास्त वेगाने"],
-      // Screenshot 275: "औद्योगिक आणि आथियक पुनरयचना मंडळ"
       [/औद्योगिक\s+आणि\s+आथियक\s+पुनरयचना\s+मंडळ/g, "औद्योगिक आणि आर्थिक पुनर्रचना मंडळ"],
       [/पुनरयचना/g, "पुनर्रचना"],
       [/पुनरयचनेचा/g, "पुनर्रचनेचा"],
       [/पुनरुज्जीवन/g, "पुनरुज्जीवन"],
-      // Common Devanagari OCR & rafar/matra errors
       [/त\s+नयु/g, "नवीन"],
       [/मूल\s+संवगात/g, "मूळ संवर्गात"],
       [/पु\s+हा/g, "पुन्हा"],
@@ -524,11 +595,8 @@
       for (let i = 0; i < DEVANAGARI_REPAIRS.length; i++) {
         s = s.replace(DEVANAGARI_REPAIRS[i][0], DEVANAGARI_REPAIRS[i][1]);
       }
-      // Rejoin split Marathi postpositions/case suffixes
       s = s.replace(/([\u0900-\u097F]{2,})\s+(चा|ची|चे|च्या|ला|ना|ने|नी|तून|मधून|मधील|मध्ये|साठी|कडून|प्रमाणे|नुसार|बद्दल|शिवाय)\b/g, "$1$2");
-      // Clean spaces before punctuation
       s = s.replace(/\s+([,.;:?!।])/g, "$1");
-      // Collapse excessive blank lines/spaces
       return s.replace(/\s{2,}/g, " ").trim();
     }
 
@@ -850,7 +918,7 @@
       "MPSC-199-DEMO1": { code:"MPSC-199-DEMO1",student_id:"STU101",mobile:"",plan:"199_YEARLY",device_id:null,active:true,created_at:"2026-11-25" }
     };
 
-    const STATE_KEY = "mpsc_sarav_2026_state_v35_smart";
+    const STATE_KEY = "mpsc_sarav_2026_state_v36_sets_lead";
     const DEVICE_KEY = "mpsc_sarav_device_id_v1";
 
     function getOrCreateDeviceId() {
@@ -866,9 +934,10 @@
 
     function loadState() {
       const fallback = {
-        activeTab:"dashboard",studentName:"उमेदवार",studentDistrict:"नाशिक",boundStudentId:"",activePasscode:"",isProUnlocked:false,
+        activeTab:"dashboard",studentName:"उमेदवार",studentDistrict:"नाशिक",studentMobile:"",boundStudentId:"",activePasscode:"",isProUnlocked:false,
         adminPasswordHash:btoa("admin123"),isAdminAuthenticated:false,adminTab:"passcodes",
         passcodeStatusFilter:"ALL",passcodeSearch:"",
+        studentLeads:[],
         supabaseUrl:DEFAULT_SUPABASE_URL,supabaseKey:DEFAULT_SUPABASE_KEY,
         questions:SAMPLE_QUESTIONS,pdfs:DEFAULT_PDFS,githubPdfs:[],removedPdfKeys:[],pdfAccessFilter:"ALL",passcodes:DEFAULT_PASSCODES,
         mistakes:[],bookmarks:[],
@@ -884,6 +953,7 @@
         const parsed = JSON.parse(raw);
         return {
           ...fallback,...parsed,questions:SAMPLE_QUESTIONS,
+          studentLeads:Array.isArray(parsed.studentLeads)?parsed.studentLeads:[],
           pdfs:Array.isArray(parsed.pdfs)?parsed.pdfs:DEFAULT_PDFS,
           githubPdfs:Array.isArray(parsed.githubPdfs)?parsed.githubPdfs:[],
           removedPdfKeys:Array.isArray(parsed.removedPdfKeys)?parsed.removedPdfKeys:[],
@@ -906,7 +976,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.remove("show"), 4000);
+      window._toastTimer = setTimeout(() => el.classList.remove("show"), 4200);
     }
 
     function copyText(txt, toastMsg) {
@@ -943,13 +1013,63 @@
     function openWhatsAppUrl(text) { window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank", "noopener"); }
 
     function openWhatsAppInquiry() {
-      openWhatsAppUrl(`नमस्कार Admin (MPSC Sarav 2026-27),\nमला पोर्टलबाबत चौकशी / मदत हवी आहे.\nनाव: ${appState.studentName || "उमेदवार"}\nजिल्हा: ${appState.studentDistrict || "महाराष्ट्र"}\nStudent ID: ${appState.boundStudentId || "नाही"}\nDevice ID: ${CURRENT_DEVICE_ID}`);
+      openWhatsAppUrl(`नमस्कार Admin (MPSC Sarav 2026-27),\nमला Pro ₹199/वर्ष प्लॅन व सराव सेट्सबाबत चौकशी हवी आहे.\nनाव: ${appState.studentName || "उमेदवार"}\nमोबाइल: ${appState.studentMobile || "-"}\nजिल्हा: ${appState.studentDistrict || "महाराष्ट्र"}\nStudent ID: ${appState.boundStudentId || "नाही"}\nDevice ID: ${CURRENT_DEVICE_ID}`);
+    }
+
+    function submitStudentRegistrationForm() {
+      const nameVal = (document.getElementById("regStudentName")?.value || appState.studentName || "").trim();
+      const mobVal = (document.getElementById("regStudentMobile")?.value || appState.studentMobile || "").trim();
+      const sidVal = (document.getElementById("regStudentId")?.value || appState.boundStudentId || "").trim().toUpperCase();
+      const distVal = document.getElementById("regStudentDistrict")?.value || appState.studentDistrict || "नाशिक";
+
+      if (!nameVal) { showToast("कृपया तुमचे नाव टाका."); return; }
+      const cleanMob = mobVal.replace(/\D/g, "");
+      if (cleanMob.length < 10) { showToast("कृपया 10 अंकी मोबाइल / WhatsApp नंबर टाका."); return; }
+
+      const generatedSid = sidVal || ("STU" + String(100 + (appState.studentLeads.length + 1)));
+      appState.studentName = nameVal;
+      appState.studentMobile = cleanMob.slice(-10);
+      appState.studentDistrict = distVal;
+      if (!appState.boundStudentId) appState.boundStudentId = generatedSid;
+
+      const leadEntry = {
+        id: "LEAD-" + Date.now(),
+        name: nameVal,
+        mobile: cleanMob.slice(-10),
+        student_id: generatedSid,
+        district: distVal,
+        device_id: CURRENT_DEVICE_ID,
+        created_at: new Date().toLocaleString("mr-IN")
+      };
+      appState.studentLeads.unshift(leadEntry);
+      appState.studentLeads = appState.studentLeads.slice(0, 200);
+      saveState();
+
+      document.getElementById("modalStudentId").value = generatedSid;
+      document.getElementById("paymentStudentId").value = generatedSid;
+
+      openWhatsAppUrl(
+        `नमस्कार Admin (MPSC Sarav 2026-27),\nमला Pro ₹199/वर्ष प्लॅन घ्यायचा आहे.\nनाव: ${nameVal}\nमोबाइल: ${cleanMob.slice(-10)}\nजिल्हा: ${distVal}\nStudent ID: ${generatedSid}\nDevice ID: ${CURRENT_DEVICE_ID}\nकृपया Passcode पाठवा.`
+      );
+      showToast(`माहिती सेव्ह झाली! Student ID: ${generatedSid} • WhatsApp उघडत आहे...`);
+    }
+
+    function quickCreatePasscodeFromLead(leadIdx) {
+      const lead = appState.studentLeads[leadIdx];
+      if (!lead) return;
+      const code = "MPSC-199-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+      const rec = { code, student_id: lead.student_id, mobile: lead.mobile, plan: "199_YEARLY", device_id: null, active: true, created_at: new Date().toISOString().slice(0, 10) };
+      appState.passcodes[code] = rec;
+      saveState();
+      syncCloudPasscode(rec);
+      showToast(`${lead.student_id} साठी Passcode ${code} तयार झाला!`);
+      renderAll();
     }
 
     function sendPaymentProofWhatsApp() {
       const sid = (document.getElementById("paymentStudentId")?.value || document.getElementById("modalStudentId")?.value || appState.boundStudentId || "").trim().toUpperCase();
       const utr = (document.getElementById("paymentUtrInput")?.value || "").trim();
-      openWhatsAppUrl(`नमस्कार Admin (MPSC Sarav 2026-27),\nमी Pro ₹199/वर्ष प्लॅनसाठी UPI पेमेंट केले आहे (${UPI_ID} / ${UPI_NUMBER}).\nनाव: ${appState.studentName || "उमेदवार"}\nजिल्हा: ${appState.studentDistrict || "महाराष्ट्र"}\nStudent ID: ${sid || "(Student ID टाका)"}\nDevice ID: ${CURRENT_DEVICE_ID}\nUTR / Ref No.: ${utr || "(UTR टाका)"}\nकृपया माझा 1-Device Passcode पाठवा.`);
+      openWhatsAppUrl(`नमस्कार Admin (MPSC Sarav 2026-27),\nमी Pro ₹199/वर्ष प्लॅनसाठी UPI पेमेंट केले आहे (${UPI_ID} / ${UPI_NUMBER}).\nनाव: ${appState.studentName || "उमेदवार"}\nमोबाइल: ${appState.studentMobile || "-"}\nजिल्हा: ${appState.studentDistrict || "महाराष्ट्र"}\nStudent ID: ${sid || "(Student ID टाका)"}\nDevice ID: ${CURRENT_DEVICE_ID}\nUTR / Ref No.: ${utr || "(UTR टाका)"}\nकृपया माझा 1-Device Passcode पाठवा.`);
     }
 
     function openModal(id) { document.getElementById(id).classList.add("open"); }
@@ -961,6 +1081,10 @@
       }
     }
     function openProModal() {
+      if (document.getElementById("regStudentName")) document.getElementById("regStudentName").value = appState.studentName === "उमेदवार" ? "" : (appState.studentName || "");
+      if (document.getElementById("regStudentMobile")) document.getElementById("regStudentMobile").value = appState.studentMobile || "";
+      if (document.getElementById("regStudentId")) document.getElementById("regStudentId").value = appState.boundStudentId || "";
+      if (document.getElementById("regStudentDistrict")) document.getElementById("regStudentDistrict").value = appState.studentDistrict || "नाशिक";
       document.getElementById("modalStudentId").value = appState.boundStudentId || "";
       document.getElementById("paymentStudentId").value = appState.boundStudentId || "";
       document.getElementById("modalPasscode").value = appState.activePasscode || "";
@@ -1294,30 +1418,51 @@
       };
     }
 
+    /* Rich, specific, exam-grade explanation builder after submission */
     function buildDetailedExplanation(q, chosenIdx) {
-      const correctOpt = q.options[q.answer] || "";
-      const chosenOpt = chosenIdx !== undefined && chosenIdx !== null ? (q.options[chosenIdx] || "") : "सोडवले नाही";
+      const cleanQ = repairDevanagariText(q.question_mr || "");
+      const cleanOpts = (q.options || []).map(o => repairDevanagariText(o));
+      const correctOpt = cleanOpts[q.answer] || "पर्याय";
+      const chosenOpt = chosenIdx !== undefined && chosenIdx !== null ? (cleanOpts[chosenIdx] || "पर्याय") : "सोडवले नाही";
       const isRight = chosenIdx === q.answer;
       const baseExp = repairDevanagariText(q.explanation_mr || "");
 
       const steps = [];
-      steps.push(`<strong>१. योग्य पर्याय व संदर्भ:</strong> (${String.fromCharCode(65 + q.answer)}) <strong>${correctOpt}</strong> हे बरोबर उत्तर आहे (विषय: <em>${q.subject}</em> • घटक: <em>${q.topic}</em>).`);
+      steps.push(`<strong>१. योग्य उत्तर व विषय-घटक:</strong> अचूक पर्याय <strong>(${String.fromCharCode(65 + q.answer)}) ${correctOpt}</strong> आहे — हा प्रश्न <strong>${q.subject}</strong> या विषयातील <strong>${q.topic}</strong> (${q.q_type.toUpperCase()} ${q.year}) या घटकाशी संबंधित आहे.`);
 
       if (baseExp && !baseExp.includes("स्पष्टीकरण लवकरच जोडले जाईल")) {
-        steps.push(`<strong>२. सविस्तर स्पष्टीकरण:</strong> ${baseExp}`);
+        steps.push(`<strong>२. सविस्तर विश्लेषण:</strong> ${baseExp}`);
       } else {
-        steps.push(`<strong>२. संकल्पना स्पष्टीकरण:</strong> '<strong>${q.topic}</strong>' घटकातील संकल्पना व नियमांनुसार <strong>${correctOpt}</strong> हा पर्याय निकषांची पूर्तता करतो; प्रश्न वाचताना अटी, अपवाद आणि वर्षाचा संदर्भ तपासून उत्तर निश्चित करणे आवश्यक आहे.`);
+        const otherOpts = cleanOpts.filter((_, i) => i !== q.answer).join(" / ");
+        steps.push(`<strong>२. सविस्तर विश्लेषण:</strong> "<em>${cleanQ.slice(0, 120)}${cleanQ.length > 120 ? "..." : ""}</em>" या प्रश्नात <strong>${q.topic}</strong> च्या नियमांनुसार <strong>${correctOpt}</strong> हा पर्याय थेट अचूक ठरतो; इतर पर्याय (${otherOpts || "इतर पर्याय"}) प्रश्नातील अटी किंवा संदर्भाशी जुळत नाहीत.`);
       }
 
       if (!isRight && chosenIdx !== undefined && chosenIdx !== null) {
-        steps.push(`<strong>३. तुमचा पर्याय का चुकला?:</strong> तुम्ही (${String.fromCharCode(65 + chosenIdx)}) <strong>${chosenOpt}</strong> निवडला होता, परंतु तो <strong>${q.topic}</strong> च्या अचूक नियमाशी/तथ्याशी जुळत नाही. घाईघाईत किंवा अर्धवट माहितीवरून पर्याय निवडण्याऐवजी सर्व पर्यायांची तुलना करा.`);
+        steps.push(`<strong>३. चूक का झाली व पुढे काय काळजी घ्यावी?:</strong> तुम्ही <strong>(${String.fromCharCode(65 + chosenIdx)}) ${chosenOpt}</strong> हा पर्याय निवडला, परंतु <strong>${q.topic}</strong> मध्ये अचूक उत्तर <strong>${correctOpt}</strong> आहे. परीक्षेत 'बरोबर/नाही', वर्ष/तारीख किंवा जोडीतील क्रम काळजीपूर्वक तपासून पर्याय निवडा.`);
       } else if (chosenIdx === undefined || chosenIdx === null) {
-        steps.push(`<strong>३. परीक्षा सराव टीप:</strong> हा प्रश्न सोडवलेला नव्हता. निगेटिव्ह मार्किंग (-${activeExam?.negPerQ ?? 0.25}) लक्षात घेऊन खात्री नसल्यास काळजीपूर्वक निर्णय घ्या, पण संकल्पना पक्की असल्यास प्रयत्न करा.`);
+        steps.push(`<strong>३. सोडवले नसल्याची नोंद:</strong> हा प्रश्न सोडवलेला नव्हता (${q.subject} • ${q.topic}). निगेटिव्ह मार्किंग (-${activeExam?.negPerQ ?? 0.25}) असले तरी मूलभूत घटकांचा सराव पूर्ण असल्यास आत्मविश्वासाने उत्तर देण्याचा सराव ठेवा.`);
       } else {
-        steps.push(`<strong>३. अचूकता नोंद:</strong> तुमचे उत्तर बरोबर आहे! हाच दृष्टिकोन परीक्षेतही कायम ठेवा.`);
+        steps.push(`<strong>३. बरोबर उत्तराची पुष्टी:</strong> तुमचा <strong>(${String.fromCharCode(65 + chosenIdx)}) ${chosenOpt}</strong> हा पर्याय अचूक आहे! <strong>${q.topic}</strong> मधील ही संकल्पना पक्की ठेवा.`);
       }
 
       return steps;
+    }
+
+    /* Non-repeating numbered set builder: e.g. Set 1 (Q 1-20), Set 2 (Q 21-40) */
+    function getNonRepeatingSetQuestions(pool, setIndex = 0, setSize = 20) {
+      if (!pool.length) return [];
+      const startIdx = setIndex * setSize;
+      if (startIdx < pool.length) {
+        return pool.slice(startIdx, Math.min(pool.length, startIdx + setSize)).map((q, i) => ({
+          ...q,
+          _uid: `${q.id}_s${setIndex + 1}_${i}`
+        }));
+      }
+      return [];
+    }
+
+    function getMaxSetsCount(totalQuestions, setSize = 20) {
+      return Math.max(0, Math.ceil((totalQuestions || 0) / setSize));
     }
 
     function parseCouponRowToRecord(r) {
@@ -1392,7 +1537,7 @@
       appState.isProUnlocked = true;
       saveState();
       await syncCloudPasscode(record);
-      return { ok: true, msg: `Pro ₹199 प्लॅन सक्रिय! सर्व प्रश्न व PDFs अनलॉक झाले (${studentId} • ${CURRENT_DEVICE_ID}).` };
+      return { ok: true, msg: `Pro ₹199 प्लॅन सक्रिय! सर्व सेट्स व PDFs अनलॉक झाले (${studentId} • ${CURRENT_DEVICE_ID}).` };
     }
 
     async function activateStudentPasscode() {
@@ -1587,103 +1732,104 @@
       });
     }
 
-    function pickBalancedPrelimsQuestions(pool, count = 100) {
+    /* Non-repeating Prelims 100-mark set ordered by MPSC subject weightage */
+    function pickBalancedPrelimsQuestions(pool, count = 100, setIndex = 0) {
       if (!pool.length) return [];
       const preSubjs = MPSC_SUBJECTS.filter(s => s.preWeight > 0);
       const buckets = {};
       for (const s of preSubjs) buckets[s.key] = [];
       for (let i = 0; i < pool.length; i++) if (buckets[pool[i].subject]) buckets[pool[i].subject].push(pool[i]);
-      const scaleFactor = count / 100, picked = [], usedIds = new Set();
+
+      const scaleFactor = count / 100;
+      const picked = [];
+      const usedIds = new Set();
+
       for (const s of preSubjs) {
-        const subPool = [...buckets[s.key]].sort(() => Math.random() - 0.5);
-        const take = Math.min(Math.max(1, Math.round(s.preWeight * scaleFactor)), subPool.length);
+        const subAll = buckets[s.key];
+        const take = Math.max(1, Math.round(s.preWeight * scaleFactor));
+        const offset = (setIndex * take) % Math.max(1, subAll.length);
         for (let j = 0; j < take && picked.length < count; j++) {
-          picked.push({ ...subPool[j] });
-          usedIds.add(subPool[j].id);
+          if (subAll.length > 0) {
+            const candidate = subAll[(offset + j) % subAll.length];
+            if (!usedIds.has(candidate.id)) {
+              picked.push({ ...candidate });
+              usedIds.add(candidate.id);
+            }
+          }
         }
       }
-      if (picked.length < count) {
-        const rest = pool.filter(q => !usedIds.has(q.id)).sort(() => Math.random() - 0.5);
-        for (let k = 0; k < rest.length && picked.length < count; k++) {
-          picked.push({ ...rest[k] });
-          usedIds.add(rest[k].id);
-        }
+
+      const remaining = pool.filter(q => !usedIds.has(q.id));
+      const remOffset = (setIndex * count) % Math.max(1, remaining.length);
+      for (let k = 0; k < remaining.length && picked.length < count; k++) {
+        const item = remaining[(remOffset + k) % remaining.length];
+        picked.push({ ...item });
+        usedIds.add(item.id);
       }
-      if (picked.length < count && pool.length > 0) {
-        const shuffledAll = [...pool].sort(() => Math.random() - 0.5);
-        let idx = 0;
-        while (picked.length < count) {
-          picked.push({ ...shuffledAll[idx % shuffledAll.length] });
-          idx++;
-        }
-      }
+
       const ordered = picked.slice(0, count).sort((a, b) => {
         const ia = PRELIMS_WEIGHTAGE_ORDER.indexOf(a.subject);
         const ib = PRELIMS_WEIGHTAGE_ORDER.indexOf(b.subject);
         return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       });
-      return ordered.map((item, i) => ({ ...item, _uid: `${item.id}_w_${i}` }));
-    }
-
-    function pickStrictTopicQuestions(subj, topicName, maxCount = 20) {
-      return [...appState.questions.filter(q => q.subject === subj && q.topic === topicName)].sort(() => Math.random() - 0.5).slice(0, maxCount).map((q, i) => ({ ...q, _uid: `${q.id}_strict_${i}` }));
-    }
-
-    function pickStrictSubjectQuestions(subj, maxCount = 20) {
-      return [...appState.questions.filter(q => q.subject === subj)].sort(() => Math.random() - 0.5).slice(0, maxCount).map((q, i) => ({ ...q, _uid: `${q.id}_subj_${i}` }));
-    }
-
-    function pickYearWisePyqQuestions(yearStr, maxCount = 50) {
-      const yearPool = appState.questions.filter(q => q.q_type === "pyq" && String(q.year) === String(yearStr));
-      return [...yearPool].sort(() => Math.random() - 0.5).slice(0, maxCount).sort((a, b) => {
-        const ia = PRELIMS_WEIGHTAGE_ORDER.indexOf(a.subject);
-        const ib = PRELIMS_WEIGHTAGE_ORDER.indexOf(b.subject);
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-      }).map((q, i) => ({ ...q, _uid: `${q.id}_yr_${i}` }));
-    }
-
-    function pickQuestionsWithRepeats(pool, count) {
-      if (!pool.length) return [];
-      const shuffled = [...pool].sort(() => Math.random() - 0.5), out = [];
-      for (let i = 0; i < count; i++) out.push({ ...shuffled[i % shuffled.length], _uid: `${shuffled[i % shuffled.length].id}_${i}` });
-      return out;
+      return ordered.map((item, i) => ({ ...item, _uid: `${item.id}_p${setIndex}_${i}` }));
     }
 
     function startExamByKey(presetKey, extraData = "") {
       if (presetKey === "demo_pre") {
-        startExamSession({ title: "डेमो पेपर १: MPSC गट-क पूर्व परीक्षा (100 प्रश्न)", modeKey: "demo_pre", customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 100), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
+        startExamSession({ title: "डेमो पेपर १: MPSC गट-क पूर्व परीक्षा (100 प्रश्न)", modeKey: "demo_pre", customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 100, 0), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
       } else if (presetKey === "demo_mains1") {
         const pool = getFilteredPool("mains1");
-        startExamSession({ title: "डेमो पेपर २: मुख्य परीक्षा Paper 1 (मराठी व इंग्रजी)", modeKey: "demo_mains1", customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 50), count: 50, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
+        const setQs = getNonRepeatingSetQuestions(pool.length ? pool : appState.questions, 0, 50);
+        startExamSession({ title: "डेमो पेपर २: मुख्य परीक्षा Paper 1 (मराठी व इंग्रजी)", modeKey: "demo_mains1", customQuestions: setQs, count: setQs.length, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
       } else if (presetKey === "demo_mains2") {
         const pool = getFilteredPool("mains2");
-        startExamSession({ title: "डेमो पेपर ३: मुख्य परीक्षा Paper 2 (सामान्य ज्ञान व विषय)", modeKey: "demo_mains2", customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 50), count: 50, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
-      } else if (presetKey === "pre100") {
-        startExamSession({ title: "MPSC गट-क पूर्व परीक्षा (100 गुण • भारांशानुसार)", modeKey: "pre100", requiresPro: true, customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 100), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
+        const setQs = getNonRepeatingSetQuestions(pool.length ? pool : appState.questions, 0, 50);
+        startExamSession({ title: "डेमो पेपर ३: मुख्य परीक्षा Paper 2 (सामान्य ज्ञान व विषय)", modeKey: "demo_mains2", customQuestions: setQs, count: setQs.length, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
+      } else if (presetKey === "demo_subject") {
+        const subj = decodeURIComponent(extraData);
+        const subjPool = appState.questions.filter(q => q.subject === subj);
+        const setQs = getNonRepeatingSetQuestions(subjPool, 0, 20);
+        if (!setQs.length) { showToast(`'${subj}' चे प्रश्न उपलब्ध नाहीत.`); return; }
+        startExamSession({ title: `मोफत विषय डेमो — ${subj} (Set 1 • ${setQs.length} प्रश्न)`, modeKey: "demo_subject", customQuestions: setQs, count: setQs.length, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
+      } else if (presetKey === "pre100_set") {
+        const setIdx = Math.max(0, Number(extraData) || 0);
+        startExamSession({ title: `MPSC गट-क पूर्व 100 गुण — Set ${setIdx + 1} (भारांशानुसार)`, modeKey: "pre100_set", requiresPro: true, customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 100, setIdx), count: 100, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
       } else if (presetKey === "pre50") {
-        startExamSession({ title: "MPSC गट-क पूर्व सराव (50 प्रश्न • भारांशानुसार)", modeKey: "pre50", requiresPro: true, customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 50), count: 50, marksPerQ: 1, negPerQ: 0.25, minutes: 30 });
+        startExamSession({ title: "MPSC गट-क पूर्व सराव (50 प्रश्न • भारांशानुसार)", modeKey: "pre50", requiresPro: true, customQuestions: pickBalancedPrelimsQuestions(getFilteredPool("pre"), 50, 0), count: 50, marksPerQ: 1, negPerQ: 0.25, minutes: 30 });
       } else if (presetKey === "year_pyq") {
         const yr = extraData || appState.selectedPyqYear || "2022";
-        const yrQs = pickYearWisePyqQuestions(yr, 50);
-        if (!yrQs.length) { showToast(`${yr} वर्षाचे PYQ प्रश्न उपलब्ध नाहीत.`); return; }
-        startExamSession({ title: `Year-wise PYQ सराव — ${yr} (${yrQs.length} प्रश्न)`, modeKey: "year_pyq", requiresPro: true, customQuestions: yrQs, count: yrQs.length, marksPerQ: 1, negPerQ: 0.25, minutes: 45 });
+        const yrPool = appState.questions.filter(q => q.q_type === "pyq" && String(q.year) === String(yr)).slice(0, 100).sort((a, b) => {
+          const ia = PRELIMS_WEIGHTAGE_ORDER.indexOf(a.subject);
+          const ib = PRELIMS_WEIGHTAGE_ORDER.indexOf(b.subject);
+          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        }).map((q, i) => ({ ...q, _uid: `${q.id}_yr_${i}` }));
+        if (!yrPool.length) { showToast(`${yr} वर्षाचे PYQ प्रश्न उपलब्ध नाहीत.`); return; }
+        startExamSession({ title: `Year-wise PYQ पेपर — ${yr} (${yrPool.length} प्रश्न)`, modeKey: "year_pyq", requiresPro: true, customQuestions: yrPool, count: yrPool.length, marksPerQ: 1, negPerQ: 0.25, minutes: 60 });
       } else if (presetKey === "mains1") {
         const pool = getFilteredPool("mains1");
-        startExamSession({ title: "मुख्य परीक्षा — Paper 1 (मराठी व इंग्रजी)", modeKey: "mains1", requiresPro: true, customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 50), count: 50, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
+        const setQs = getNonRepeatingSetQuestions(pool.length ? pool : appState.questions, 0, 50);
+        startExamSession({ title: "मुख्य परीक्षा — Paper 1 (मराठी व इंग्रजी)", modeKey: "mains1", requiresPro: true, customQuestions: setQs, count: setQs.length, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
       } else if (presetKey === "mains2") {
         const pool = getFilteredPool("mains2");
-        startExamSession({ title: "मुख्य परीक्षा — Paper 2 (सामान्य ज्ञान व विषय)", modeKey: "mains2", requiresPro: true, customQuestions: pickQuestionsWithRepeats(pool.length ? pool : appState.questions, 50), count: 50, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
-      } else if (presetKey === "subj20") {
-        const subj = decodeURIComponent(extraData);
-        const strictSubj = pickStrictSubjectQuestions(subj, 20);
-        if (!strictSubj.length) { showToast(`'${subj}' या विषयाचे प्रश्न उपलब्ध नाहीत.`); return; }
-        startExamSession({ title: `${subj} — ${strictSubj.length} प्रश्न`, modeKey: "subj20", requiresPro: true, customQuestions: strictSubj, count: strictSubj.length, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
-      } else if (presetKey === "topic20") {
-        const [encSubj, encTopic] = extraData.split("||");
+        const setQs = getNonRepeatingSetQuestions(pool.length ? pool : appState.questions, 0, 50);
+        startExamSession({ title: "मुख्य परीक्षा — Paper 2 (सामान्य ज्ञान व विषय)", modeKey: "mains2", requiresPro: true, customQuestions: setQs, count: setQs.length, marksPerQ: 2, negPerQ: 0.5, minutes: 60 });
+      } else if (presetKey === "subj_set") {
+        const [encSubj, rawIdx] = extraData.split("||");
+        const subj = decodeURIComponent(encSubj);
+        const setIdx = Math.max(0, Number(rawIdx) || 0);
+        const subjPool = appState.questions.filter(q => q.subject === subj);
+        const setQs = getNonRepeatingSetQuestions(subjPool, setIdx, 20);
+        if (!setQs.length) { showToast(`'${subj}' Set ${setIdx + 1} उपलब्ध नाही.`); return; }
+        startExamSession({ title: `${subj} — Set ${setIdx + 1} (${setQs.length} प्रश्न)`, modeKey: "subj_set", requiresPro: true, customQuestions: setQs, count: setQs.length, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
+      } else if (presetKey === "topic_set") {
+        const [encSubj, encTopic, rawIdx] = extraData.split("||");
         const subj = decodeURIComponent(encSubj), tName = decodeURIComponent(encTopic);
-        const strictList = pickStrictTopicQuestions(subj, tName, 20);
-        if (!strictList.length) { showToast(`'${subj} — ${tName}' या घटकाचे प्रश्न अद्याप उपलब्ध नाहीत.`); return; }
-        startExamSession({ title: `${subj} — ${tName} (${strictList.length} प्रश्न)`, modeKey: "topic20", requiresPro: true, customQuestions: strictList, count: strictList.length, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
+        const setIdx = Math.max(0, Number(rawIdx) || 0);
+        const topicPool = appState.questions.filter(q => q.subject === subj && q.topic === tName);
+        const setQs = getNonRepeatingSetQuestions(topicPool, setIdx, 20);
+        if (!setQs.length) { showToast(`'${tName}' Set ${setIdx + 1} उपलब्ध नाही.`); return; }
+        startExamSession({ title: `${subj} — ${tName} • Set ${setIdx + 1} (${setQs.length} प्रश्न)`, modeKey: "topic_set", requiresPro: true, customQuestions: setQs, count: setQs.length, marksPerQ: 1, negPerQ: 0.25, minutes: 20 });
       } else if (presetKey === "mistakes") {
         const mistakeQs = appState.questions.filter(q => appState.mistakes.includes(q.id)).map((q, i) => ({ ...q, _uid: q.id + "_" + i }));
         startExamSession({ title: "चुकलेले प्रश्न रिव्हिजन", modeKey: "mistakes", customQuestions: mistakeQs, count: mistakeQs.length, marksPerQ: 1, negPerQ: 0, minutes: 25 });
@@ -1691,11 +1837,11 @@
     }
 
     function startExamSession(config) {
-      if (config.requiresPro && !appState.isProUnlocked) { openProModal(); showToast("हा विभाग ₹199/वर्ष Pro Passcode सक्रिय केल्यावर उघडतो."); return; }
+      if (config.requiresPro && !appState.isProUnlocked) { openProModal(); showToast("हा सेट ₹199/वर्ष Pro Passcode सक्रिय केल्यावर उघडतो."); return; }
       const pool = config.customQuestions || getFilteredPool(config.stageFilter || "ALL");
       if (!pool.length) { showToast("निवडलेल्या निकषांनुसार प्रश्न उपलब्ध नाहीत."); return; }
       activeExam = {
-        title: config.title, modeKey: config.modeKey, questions: config.customQuestions || pickQuestionsWithRepeats(pool, config.count),
+        title: config.title, modeKey: config.modeKey, questions: config.customQuestions,
         currentIndex: 0, answers: {}, marksPerQ: config.marksPerQ || 1, negPerQ: config.negPerQ ?? 0.25,
         secondsLeft: (config.minutes || 30) * 60, submitted: false, result: null
       };
@@ -1864,48 +2010,54 @@
     function renderDashboard() {
       let pyqCount = 0, newCount = 0;
       for (let i = 0; i < appState.questions.length; i++) appState.questions[i].q_type === "new" ? newCount++ : pyqCount++;
+      const total100Sets = getMaxSetsCount(getFilteredPool("pre").length, 100);
+      const subjCounts = {};
+      MPSC_SUBJECTS.forEach(s => subjCounts[s.key] = 0);
+      appState.questions.forEach(q => { if (Object.prototype.hasOwnProperty.call(subjCounts, q.subject)) subjCounts[q.subject]++; });
+
       return `
         <div class="card hero-ad-card">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
             <div style="max-width:780px;">
-              <span class="badge badge-amber">🔥 2026-27 वार्षिक सराव पास फक्त ₹199</span>
-              <h1 class="card-title" style="font-size:22px;margin-top:8px;color:#fff;">MPSC गट-क (Group C) यशाची स्मार्ट तयारी — PYQ, मुख्य परीक्षा, घटक चाचण्या व PDFs</h1>
-              <p class="card-sub" style="margin-bottom:0;">आधी मोफत डेमो पेपर्स व पहिले ९ Demo PDFs तपासा; एकच <strong>₹199/वर्ष Pro</strong> Passcode घेतल्यावर संपूर्ण प्रश्न बँक आणि सर्व PDFs एकत्रित अनलॉक होतात.</p>
+              <span class="badge badge-amber">🔥 मर्यादित कालावधी Pro ऑफर • फक्त ₹199 / वर्ष</span>
+              <h1 class="card-title" style="font-size:22px;margin-top:8px;color:#fff;">MPSC गट-क (Group C) — रिपीट न होणारे सेट्स, 100 गुणांचे पेपर्स व तपशीलवार स्पष्टीकरण</h1>
+              <p class="card-sub" style="margin-bottom:0;">प्रत्येक विषयाचे व घटकाचे वेगवेगळे न-रिपीट होणारे सेट्स उपलब्ध आहेत. एकच <strong>₹199/वर्ष Pro</strong> Passcode घ्या — <strong>${total100Sets} × 100 गुणांचे सेट्स</strong>, सर्व विषय सेट्स आणि सर्व PDFs अनलॉक होतात.</p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="btn btn-amber" onclick="openProModal()">⭐ Pro ₹199/वर्ष घ्या</button>
+              <button class="btn btn-amber" onclick="openProModal()">⭐ फॉर्म भरा व Pro ₹199 घ्या</button>
               <button class="btn btn-primary" onclick="startExamByKey('demo_pre')">▶ पूर्व डेमो (100 प्रश्न)</button>
               <button class="btn btn-wa" onclick="openWhatsAppInquiry()">💬 WhatsApp 8554011484</button>
             </div>
           </div>
           <div class="ad-perks">
             <div class="ad-perk-box">
-              <strong>📝 भारांशानुसार (Weightage) Prelims</strong>
-              चालू घडामोडी, राज्यघटना, इतिहास, भूगोल, अर्थव्यवस्था, सामान्य विज्ञान व अंकगणित-बुद्धिमत्ता क्रमाने.
+              <strong>📊 न-रिपीट होणारे सेट्स (${total100Sets} × 100 गुण)</strong>
+              प्रत्येक सेटमध्ये वेगवेगळे प्रश्न — एकदा सोडवलेला सेट पुन्हा रिपीट न होण्याची स्वतंत्र रचना.
             </div>
             <div class="ad-perk-box">
-              <strong>📄 ९ मोफत Demo PDFs + सर्व Pro PDFs</strong>
-              पहिले ९ PDFs मोफत; उरलेले सर्व PDFs आणि संपूर्ण प्रश्न बँक एकाच ₹199/वर्ष प्लॅनमध्ये अनलॉक.
+              <strong>🎯 प्रत्येक विषयाचा मोफत डेमो</strong>
+              सर्व ९ विषयांचा १-१ मोफत डेमो पेपर; बाकी सर्व सेट्स आणि ९ मोफत Demo PDFs नंतरचे सर्व Pro मध्ये.
             </div>
             <div class="ad-perk-box">
-              <strong>💡 सविस्तर उत्तर स्पष्टीकरण</strong>
-              पेपर सबमिट केल्यावर प्रत्येक प्रश्नाचे कारण, योग्य पर्याय आणि चूक दुरुस्तीचे सविस्तर विश्लेषण.
+              <strong>💰 वर्षभर फक्त ₹199 (दिवसाला ~₹0.55)</strong>
+              पुस्तक किंवा टेस्ट सिरीजपेक्षा कित्येक पटीने कमी खर्चात संपूर्ण प्रश्न बँक व सविस्तर स्पष्टीकरण.
             </div>
           </div>
         </div>
 
         <div class="grid-4">
           <div class="stat-box"><div class="stat-num">${appState.questions.length}</div><div class="stat-lbl">एकूण प्रश्न बँक (डुप्लिकेटमुक्त)</div></div>
-          <div class="stat-box"><div class="stat-num" style="color:var(--accent);">${pyqCount} PYQ / ${newCount} नवीन</div><div class="stat-lbl">PYQ व नवीन प्रश्न विभाग</div></div>
+          <div class="stat-box"><div class="stat-num" style="color:var(--accent);">${total100Sets} Sets (100 गुण)</div><div class="stat-lbl">न-रिपीट होणारे 100 गुणांचे पेपर्स</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--amber);">+1 / -0.25 गुण</div><div class="stat-lbl">MPSC पूर्व परीक्षा पॅटर्न</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div>
         </div>
 
+        <!-- Subject-wise 1-1 Free Demo Papers -->
         <div class="card" style="margin-top:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
             <div>
-              <h2 class="card-title" style="margin:0;">🧪 १-१ डेमो पेपर्स (मोफत चाचणी)</h2>
-              <div style="font-size:12px;color:var(--muted);">डेमो पेपर सोडवून पॅटर्न व सविस्तर स्पष्टीकरण तपासा; पूर्ण प्रवेशासाठी ₹199/वर्ष Pro घ्या.</div>
+              <h2 class="card-title" style="margin:0;">📚 विषयनिहाय १-१ मोफत डेमो पेपर्स (सर्व ९ विषय)</h2>
+              <div style="font-size:12px;color:var(--muted);">प्रत्येक विषयाचा १ मोफत डेमो पेपर सोडवून तपासा; पुढील सर्व सेट्ससाठी Pro ₹199/वर्ष घ्या.</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <select class="select" onchange="appState.qTypeFilter=this.value;saveState();renderAll();"><option value="ALL" ${appState.qTypeFilter==="ALL"?"selected":""}>सर्व प्रश्न (PYQ + नवीन)</option><option value="pyq" ${appState.qTypeFilter==="pyq"?"selected":""}>फक्त PYQ प्रश्न</option><option value="new" ${appState.qTypeFilter==="new"?"selected":""}>फक्त नवीन प्रश्न</option></select>
@@ -1913,9 +2065,29 @@
             </div>
           </div>
           <div class="grid-3">
-            <div class="topic-card demo-pair"><div><span class="badge badge-green">FREE DEMO • पूर्व परीक्षा</span><h3 style="margin:6px 0 4px;font-size:15px;">पूर्व परीक्षा डेमो (100 प्रश्न • 60 मि.)</h3><div style="font-size:12px;color:var(--muted);">परीक्षा भारांशानुसार क्रमवार विषय, +1 गुण व -0.25 निगेटिव्ह मार्किंग.</div></div><button class="btn btn-primary btn-sm" onclick="startExamByKey('demo_pre')">पूर्व डेमो सुरू करा</button></div>
-            <div class="topic-card demo-pair"><div><span class="badge badge-green">FREE DEMO • मुख्य Paper 1</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 1 डेमो (मराठी व इंग्रजी)</h3><div style="font-size:12px;color:var(--muted);">मराठी व्याकरण-आकलन व इंग्रजी व्याकरण-शब्दसंग्रह डेमो पेपर.</div></div><button class="btn btn-amber btn-sm" onclick="startExamByKey('demo_mains1')">Paper 1 डेमो सुरू करा</button></div>
-            <div class="topic-card demo-pair"><div><span class="badge badge-green">FREE DEMO • मुख्य Paper 2</span><h3 style="margin:6px 0 4px;font-size:15px;">मुख्य Paper 2 डेमो (सामान्य ज्ञान व विषय)</h3><div style="font-size:12px;color:var(--muted);">इतिहास, भूगोल, राज्यघटना, अर्थव्यवस्था, विज्ञान, चालू घडामोडी व RTI/RTS डेमो.</div></div><button class="btn btn-accent btn-sm" onclick="startExamByKey('demo_mains2')">Paper 2 डेमो सुरू करा</button></div>
+            ${MPSC_SUBJECTS.map(s => {
+              const cnt = subjCounts[s.key] || 0;
+              const setsCount = getMaxSetsCount(cnt, 20);
+              return `
+                <div class="topic-card demo-pair">
+                  <div>
+                    <span class="badge badge-green">FREE DEMO • 1 SET</span>
+                    <h3 style="margin:6px 0 4px;font-size:15px;">${s.key}</h3>
+                    <div style="font-size:12px;color:var(--muted);">एकूण प्रश्न: <strong>${cnt}</strong> • एकूण 20-प्रश्नी सेट्स: <strong>${setsCount}</strong></div>
+                  </div>
+                  <button class="btn btn-primary btn-sm" ${cnt===0?"disabled":""} onclick="startExamByKey('demo_subject', '${encodeURIComponent(s.key)}')">▶ 1 डेमो पेपर सुरू करा</button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <div class="marketing-strip">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div style="font-size:13px;">
+                <strong>💡 विद्यार्थी Pro प्लॅन का घेतात?</strong> डेमोमध्ये फक्त १ सेट मिळतो; <strong>₹199/वर्ष Pro</strong> घेतल्यावर <strong>${appState.questions.length} प्रश्नांचे सर्व न-रिपीट सेट्स</strong>, <strong>${total100Sets} पूर्ण 100 गुणांचे पेपर्स</strong> आणि <strong>सर्व PDFs</strong> वर्षभर अनलॉक राहतात.
+              </div>
+              <button class="btn btn-amber btn-sm" onclick="openProModal()">⭐ आत्ताच Pro ₹199 घ्या</button>
+            </div>
           </div>
         </div>
       `;
@@ -1923,6 +2095,8 @@
 
     function renderPreExamTab() {
       const preSubjects = MPSC_SUBJECTS.filter(s => s.preWeight > 0);
+      const prePool = getFilteredPool("pre");
+      const total100Sets = getMaxSetsCount(prePool.length, 100);
       const yearCounts = {};
       appState.questions.forEach(q => {
         if (q.q_type === "pyq") {
@@ -1933,7 +2107,31 @@
       const years = Object.keys(yearCounts).sort((a, b) => Number(b) - Number(a));
       const activeYr = years.includes(String(appState.selectedPyqYear)) ? String(appState.selectedPyqYear) : (years[0] || "2022");
 
-      return `<div class="card"><h2 class="card-title">📝 MPSC गट-क पूर्व परीक्षा (100 गुण • भारांशानुसार विषय क्रम)</h2><p class="card-sub">विषय भारांशानुसार क्रम: चालू घडामोडी → राज्यघटना → इतिहास → भूगोल → अर्थव्यवस्था → सामान्य विज्ञान → अंकगणित व बुद्धिमत्ता (+1 / -0.25 गुण).</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"><button class="btn btn-primary" onclick="startExamByKey('pre100')">▶ संपूर्ण 100 गुणांची पूर्व परीक्षा</button><button class="btn btn-accent" onclick="startExamByKey('pre50')">⚡ 50 प्रश्नांची पूर्व सराव चाचणी</button></div><div class="stat-box" style="margin-bottom:16px;background:#f0fdfa;border-color:#99f6e4;"><div style="font-weight:800;font-size:14px;margin-bottom:8px;">📅 थेट Year-wise PYQ पेपर सोडवा</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select class="select" onchange="appState.selectedPyqYear=this.value;saveState();renderAll();">${(years.length ? years : ["2025","2023","2022","2021","2020","2019"]).map(y => `<option value="${y}" ${y===activeYr?"selected":""}>PYQ वर्ष ${y} (${yearCounts[y] || 0} प्रश्न)</option>`).join("")}</select><button class="btn btn-accent btn-sm" onclick="startExamByKey('year_pyq', '${activeYr}')">▶ ${activeYr} वर्षाचे PYQ सुरू करा</button></div></div><h3 style="font-size:15px;font-weight:800;margin:14px 0 8px;">पूर्व परीक्षा विषय व भारांश</h3><table><thead><tr><th>क्र.</th><th>विषय</th><th>भारांश</th><th>सराव</th></tr></thead><tbody>${preSubjects.map((s, idx) => `<tr><td><strong>${idx + 1}</strong></td><td><strong>${s.label}</strong></td><td>${s.preWeight} प्रश्न</td><td><button class="btn btn-sm" onclick="startExamByKey('subj20', '${encodeURIComponent(s.key)}')">20 प्रश्न सराव</button></td></tr>`).join("")}</tbody></table></div>`;
+      const setButtons = [];
+      const showLimit = Math.min(total100Sets, 30);
+      for (let s = 0; s < showLimit; s++) {
+        setButtons.push(`<button class="btn btn-sm ${s===0?'btn-primary':''}" onclick="startExamByKey('pre100_set', '${s}')">Set ${s + 1} (100 गुण)</button>`);
+      }
+
+      return `
+        <div class="card">
+          <h2 class="card-title">📝 MPSC गट-क पूर्व परीक्षा — 100 गुणांचे न-रिपीट होणारे सेट्स (एकूण ${total100Sets} सेट्स)</h2>
+          <p class="card-sub">विषय भारांशानुसार क्रम: चालू घडामोडी → राज्यघटना → इतिहास → भूगोल → अर्थव्यवस्था → सामान्य विज्ञान → अंकगणित व बुद्धिमत्ता (+1 / -0.25 गुण). प्रत्येक सेट वेगळा असल्याने प्रश्न रिपीट होत नाहीत.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${setButtons.join("")}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+            <button class="btn btn-accent btn-sm" onclick="startExamByKey('pre50')">⚡ 50 प्रश्नांची पूर्व सराव चाचणी</button>
+          </div>
+          <div class="stat-box" style="margin-bottom:16px;background:#f0fdfa;border-color:#99f6e4;">
+            <div style="font-weight:800;font-size:14px;margin-bottom:8px;">📅 थेट Year-wise PYQ पेपर सोडवा</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select class="select" onchange="appState.selectedPyqYear=this.value;saveState();renderAll();">${(years.length ? years : ["2025","2023","2022","2021","2020","2019"]).map(y => `<option value="${y}" ${y===activeYr?"selected":""}>PYQ वर्ष ${y} (${yearCounts[y] || 0} प्रश्न)</option>`).join("")}</select>
+              <button class="btn btn-accent btn-sm" onclick="startExamByKey('year_pyq', '${activeYr}')">▶ ${activeYr} वर्षाचे PYQ सुरू करा</button>
+            </div>
+          </div>
+          <h3 style="font-size:15px;font-weight:800;margin:14px 0 8px;">पूर्व परीक्षा विषय व भारांश</h3>
+          <table><thead><tr><th>क्र.</th><th>विषय</th><th>भारांश</th><th>सराव</th></tr></thead><tbody>${preSubjects.map((s, idx) => `<tr><td><strong>${idx + 1}</strong></td><td><strong>${s.label}</strong></td><td>${s.preWeight} प्रश्न</td><td><button class="btn btn-sm" onclick="startExamByKey('subj_set', '${encodeURIComponent(s.key)}||0')">Set 1 (20 प्रश्न)</button></td></tr>`).join("")}</tbody></table>
+        </div>
+      `;
     }
 
     function renderMainsExamTab() {
@@ -1955,8 +2153,63 @@
       }
 
       const allMappedTotal = Object.values(subjectTotals).reduce((a, b) => a + b, 0);
+      const subjTotalQ = subjectTotals[selectedSubj] || 0;
+      const subjSetsTotal = getMaxSetsCount(subjTotalQ, 20);
 
-      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;"><div><h2 class="card-title" style="margin:0;">🎯 विषयनिहाय व घटकनिहाय 20 प्रश्नांची चाचणी (एकूण: ${allMappedTotal} प्रश्न)</h2><p class="card-sub" style="margin-bottom:0;">देवनागरी अक्षर दुरुस्ती व सखोल कीवर्ड वर्गीकरण लागू करून सर्व <strong>${allMappedTotal}</strong> प्रश्न ९ विषयांत व त्यांच्या मुख्य घटकांत विभागले आहेत.</p></div>${appState.isAdminAuthenticated ? `<button class="btn btn-sm btn-accent" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा अक्षर स्वच्छ व वर्गवारी करा</button>` : ""}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">${MPSC_SUBJECTS.map(s => `<button class="btn btn-sm ${s.key === selectedSubj ? "btn-primary" : ""}" onclick="selectTopicSubject('${encodeURIComponent(s.key)}')">${s.key} (${subjectTotals[s.key] || 0})</button>`).join("")}</div><div class="grid-3">${topicNames.map(tName => { const cnt = topicCounts[tName] || 0, testSize = Math.min(20, cnt); return `<div class="topic-card"><div><span class="badge badge-blue">${selectedSubj}</span><h3 style="margin:6px 0 4px;font-size:15px;">${tName}</h3><div style="font-size:12px;color:var(--muted);">प्रश्न उपलब्ध: <strong>${cnt}</strong> • चाचणी प्रश्न: ${testSize}</div></div><button class="btn btn-primary btn-sm" ${cnt === 0 ? "disabled" : ""} onclick="startExamByKey('topic20', '${encodeURIComponent(selectedSubj)}||' + '${encodeURIComponent(tName)}')">${cnt > 0 ? `${testSize} प्रश्नांची टेस्ट सुरू करा` : "या घटकाचे प्रश्न उपलब्ध नाहीत"}</button></div>`; }).join("")}</div></div>`;
+      const subjSetBtns = [];
+      for (let s = 0; s < Math.min(subjSetsTotal, 25); s++) {
+        const startQ = s * 20 + 1;
+        const endQ = Math.min(subjTotalQ, (s + 1) * 20);
+        subjSetBtns.push(`<button class="btn btn-sm ${s===0?'btn-accent':''}" onclick="startExamByKey('subj_set', '${encodeURIComponent(selectedSubj)}||${s}')">Set ${s + 1} (प्र. ${startQ}-${endQ})</button>`);
+      }
+
+      return `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+            <div>
+              <h2 class="card-title" style="margin:0;">🎯 विषयनिहाय व घटकनिहाय न-रिपीट होणारे 20-प्रश्नी सेट्स (एकूण: ${allMappedTotal} प्रश्न)</h2>
+              <p class="card-sub" style="margin-bottom:0;">प्रत्येक सेटमध्ये वेगळे प्रश्न असल्याने प्रश्न रिपीट होत नाहीत — किती सेट्स बनतात याची स्पष्ट संख्या खाली दिली आहे.</p>
+            </div>
+            ${appState.isAdminAuthenticated ? `<button class="btn btn-sm btn-accent" onclick="reclassifyExistingQuestions()">🔄 सर्व प्रश्न पुन्हा अक्षर स्वच्छ व वर्गवारी करा</button>` : ""}
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+            ${MPSC_SUBJECTS.map(s => `<button class="btn btn-sm ${s.key === selectedSubj ? "btn-primary" : ""}" onclick="selectTopicSubject('${encodeURIComponent(s.key)}')">${s.key} (${subjectTotals[s.key] || 0})</button>`).join("")}
+          </div>
+
+          ${subjSetsTotal > 0 ? `
+            <div class="stat-box" style="margin-bottom:16px;background:#f0fdfa;border-color:#99f6e4;">
+              <div style="font-weight:800;font-size:14px;margin-bottom:8px;">📑 ${selectedSubj} — एकूण ${subjTotalQ} प्रश्नांचे ${subjSetsTotal} न-रिपीट सेट्स (20 प्रश्न प्रति सेट)</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">${subjSetBtns.join("")}</div>
+            </div>
+          ` : ""}
+
+          <div class="grid-3">
+            ${topicNames.map(tName => {
+              const cnt = topicCounts[tName] || 0;
+              const tSets = getMaxSetsCount(cnt, 20);
+              const setChips = [];
+              for (let k = 0; k < Math.min(tSets, 6); k++) {
+                const qFrom = k * 20 + 1;
+                const qTo = Math.min(cnt, (k + 1) * 20);
+                setChips.push(`<button class="btn btn-primary btn-sm" onclick="startExamByKey('topic_set', '${encodeURIComponent(selectedSubj)}||${encodeURIComponent(tName)}||${k}')">Set ${k + 1} (${qTo - qFrom + 1} प्र.)</button>`);
+              }
+              return `
+                <div class="topic-card">
+                  <div>
+                    <span class="badge badge-blue">${selectedSubj}</span>
+                    <h3 style="margin:6px 0 4px;font-size:15px;">${tName}</h3>
+                    <div style="font-size:12px;color:var(--muted);">प्रश्न उपलब्ध: <strong>${cnt}</strong> • एकूण न-रिपीट सेट्स: <strong>${tSets}</strong></div>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    ${cnt > 0 ? setChips.join("") : `<button class="btn btn-sm" disabled>या घटकाचे प्रश्न उपलब्ध नाहीत</button>`}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
     }
 
     function selectTopicSubject(encodedKey) { appState.selectedTopicSubject = decodeURIComponent(encodedKey); saveState(); renderAll(); }
@@ -2049,7 +2302,6 @@
       return `<div class="card"><h2 class="card-title">🏆 गुणवत्ता यादी (Leaderboard)</h2><p class="card-sub">तुमचे गुण आणि अचूकता यादीत नोंदवली जाते.</p><table><thead><tr><th>क्र.</th><th>विद्यार्थी</th><th>जिल्हा</th><th>चाचणी</th><th>गुण</th><th>अचूकता</th></tr></thead><tbody>${sorted.map((row, i) => `<tr><td><strong>#${i + 1}</strong></td><td>${row.student_name}</td><td>${row.district}</td><td>${row.mode}</td><td><strong>${row.score} / ${row.total}</strong></td><td>${row.accuracy}%</td></tr>`).join("")}</tbody></table></div>`;
     }
 
-    /* Smart Admin KPI & Filtering helpers */
     function getAdminStats() {
       const passList = Object.values(appState.passcodes || {});
       const activePass = passList.filter(p => p.active !== false).length;
@@ -2079,6 +2331,7 @@
       const stats = getAdminStats();
       const searchQ = (appState.passcodeSearch || "").trim().toUpperCase();
       const statusFilter = appState.passcodeStatusFilter || "ALL";
+      const leads = Array.isArray(appState.studentLeads) ? appState.studentLeads : [];
 
       const passList = Object.values(appState.passcodes).filter(p => {
         if (statusFilter === "ACTIVE" && p.active === false) return false;
@@ -2101,7 +2354,6 @@
             <button class="btn btn-sm" onclick="appState.isAdminAuthenticated=false;appState.activeTab='dashboard';saveState();renderAll();">लॉगआउट</button>
           </div>
 
-          <!-- Smart KPI Summary Row -->
           <div class="grid-4" style="margin-bottom:14px;">
             <div class="stat-box">
               <div class="stat-num">${stats.totalQ}</div>
@@ -2112,8 +2364,8 @@
               <div class="stat-lbl">सक्रिय Passcodes (Revoked: ${stats.revokedPass})</div>
             </div>
             <div class="stat-box">
-              <div class="stat-num" style="color:var(--accent);">${stats.lockedPass}</div>
-              <div class="stat-lbl">Device-Locked Passcodes</div>
+              <div class="stat-num" style="color:var(--accent);">${leads.length}</div>
+              <div class="stat-lbl">विद्यार्थी फॉर्म नोंदणी (Leads)</div>
             </div>
             <div class="stat-box">
               <div class="stat-num" style="color:var(--amber);">₹199 / yr</div>
@@ -2122,13 +2374,34 @@
           </div>
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-            <button class="btn btn-sm ${aTab==='passcodes'?'btn-primary':''}" onclick="appState.adminTab='passcodes';renderAll();">🔐 Passcodes & 1-Device Lock</button>
+            <button class="btn btn-sm ${aTab==='passcodes'?'btn-primary':''}" onclick="appState.adminTab='passcodes';renderAll();">🔐 Passcodes & Student Leads (${leads.length})</button>
             <button class="btn btn-sm ${aTab==='json'?'btn-primary':''}" onclick="appState.adminTab='json';renderAll();">📥 JSON & Data Health</button>
             <button class="btn btn-sm ${aTab==='pdfs'?'btn-primary':''}" onclick="appState.adminTab='pdfs';renderAll();">📄 PDFs & Cleanup</button>
             <button class="btn btn-sm ${aTab==='cloud'?'btn-primary':''}" onclick="appState.adminTab='cloud';renderAll();">☁️ Cloud & Admin Password</button>
           </div>
 
           ${aTab === "passcodes" ? `
+            ${leads.length ? `
+              <div class="stat-box" style="margin-bottom:14px;background:#eff6ff;border-color:#93c5fd;">
+                <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">📋 विद्यार्थ्यांनी भरलेला Pro Inquiry फॉर्म (${leads.length})</h3>
+                <table>
+                  <thead><tr><th>नाव</th><th>मोबाइल</th><th>Student ID</th><th>जिल्हा</th><th>वेळ</th><th>क्रिया</th></tr></thead>
+                  <tbody>
+                    ${leads.map((ld, idx) => `
+                      <tr>
+                        <td><strong>${ld.name}</strong></td>
+                        <td>${ld.mobile}</td>
+                        <td><code>${ld.student_id}</code></td>
+                        <td>${ld.district}</td>
+                        <td>${ld.created_at}</td>
+                        <td><button class="btn btn-primary btn-sm" onclick="quickCreatePasscodeFromLead(${idx})">+ Passcode तयार करा</button></td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : ""}
+
             <div class="stat-box" style="margin-bottom:14px;">
               <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">नवीन Passcode तयार करा (1 Passcode = 1 Student ID + 1 Device Lock)</h3>
               <div class="grid-4" style="margin-bottom:8px;">
@@ -2144,7 +2417,6 @@
               </div>
             </div>
 
-            <!-- Smart Search & Status Filter for Passcodes -->
             <div class="stat-box" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
                 <button class="btn btn-sm ${statusFilter==='ALL'?'btn-primary':''}" onclick="appState.passcodeStatusFilter='ALL';saveState();renderAll();">सर्व (${stats.totalPass})</button>
@@ -2196,10 +2468,10 @@
               </div>
             </div>
             <div class="stat-box">
-              <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">विषयनिहाय प्रश्न संख्या तपासणी</h3>
+              <h3 style="margin:0 0 8px;font-size:15px;font-weight:800;">विषयनिहाय प्रश्न संख्या व न-रिपीट सेट्स</h3>
               <table>
-                <thead><tr><th>विषय</th><th>प्रश्न संख्या</th></tr></thead>
-                <tbody>${MPSC_SUBJECTS.map(s => `<tr><td><strong>${s.key}</strong></td><td>${stats.subjCounts[s.key] || 0}</td></tr>`).join("")}</tbody>
+                <thead><tr><th>विषय</th><th>प्रश्न संख्या</th><th>20-प्रश्नी सेट्स</th></tr></thead>
+                <tbody>${MPSC_SUBJECTS.map(s => { const c = stats.subjCounts[s.key] || 0; return `<tr><td><strong>${s.key}</strong></td><td>${c}</td><td>${getMaxSetsCount(c, 20)} सेट्स</td></tr>`; }).join("")}</tbody>
               </table>
             </div>
           ` : ""}
