@@ -202,6 +202,7 @@
       <button class="tab-btn" data-tab="mains" onclick="switchTab('mains')">📚 मुख्य परीक्षा (Paper 1 & 2)</button>
       <button class="tab-btn" data-tab="topics" onclick="switchTab('topics')">🎯 विषय व घटक सेट्स</button>
       <button class="tab-btn" data-tab="mistakes" onclick="switchTab('mistakes')">📌 चूक व बुकमार्क</button>
+      <button class="tab-btn" data-tab="dailynews" onclick="switchTab('dailynews')">📰 रोजच्या घडामोडी व दिनविशेष</button>
       <button class="tab-btn" data-tab="pdfs" onclick="switchTab('pdfs')">📄 PYQ पेपर PDFs</button>
       <button class="tab-btn" data-tab="leaderboard" onclick="switchTab('leaderboard')">🏆 गुणवत्ता यादी</button>
     </div>
@@ -1980,6 +1981,7 @@
       if (activeExam && !activeExam.submitted) { showToast("सध्या सुरू असलेली चाचणी पूर्ण करा किंवा बाहेर पडा."); return; }
       activeExam = null; appState.activeTab = tab; saveState(); renderAll();
       if (tab === "pdfs") loadPortalPdfCatalog(false);
+      fetchAutoDailyNewsFromCloudOrGitHub(true);
     }
 
     function renderTopAndProfile() {
@@ -2050,6 +2052,33 @@
           <div class="stat-box"><div class="stat-num" style="color:var(--accent);">${total100Sets} Sets (100 गुण)</div><div class="stat-lbl">न-रिपीट होणारे 100 गुणांचे पेपर्स</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--amber);">+1 / -0.25 गुण</div><div class="stat-lbl">MPSC पूर्व परीक्षा पॅटर्न</div></div>
           <div class="stat-box"><div class="stat-num" style="color:var(--emerald);">₹199 / वर्ष</div><div class="stat-lbl">UPI: ${UPI_NUMBER}</div></div>
+        </div>
+
+        <!-- Daily Dinvishesh & News Quick Card on Dashboard -->
+        <div class="card" style="margin-top:14px;border-left:4px solid var(--accent);">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+            <div>
+              <span class="badge badge-teal">आजचा दिनविशेष व चालू घडामोडी</span>
+              <h2 class="card-title" style="margin-top:4px;">🗓️ दिनविशेष व ताज्या घडामोडी (Daily Auto-Update)</h2>
+              <div style="font-size:12px;color:var(--muted);">दररोज सकाळी ७:०० वाजता GitHub Actions वरून अपडेट होणाऱ्या नोंदी; पूर्ण यादी व PDF डाउनलोडसाठी टॅब उघडा.</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-accent btn-sm" onclick="fetchAutoDailyNewsFromCloudOrGitHub(false)">🔄 आता अपडेट घ्या</button>
+              <button class="btn btn-primary btn-sm" onclick="switchTab('dailynews')">📰 सर्व घडामोडी व PDF पहा →</button>
+            </div>
+          </div>
+          <div id="dashboardDinvisheshPreview" class="grid-2">
+            ${getAllDailyNews().slice(0, 2).map(n => `
+              <div class="stat-box">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                  <span class="badge badge-blue">${n.date || "-"}</span>
+                  <span class="badge badge-amber">${repairDevanagariText(n.category || "दिनविशेष")}</span>
+                </div>
+                <div style="font-weight:800;font-size:14px;margin-bottom:4px;">${repairDevanagariText(n.title || "")}</div>
+                <div style="font-size:12.5px;color:var(--muted);">${repairDevanagariText(n.summary || "")}</div>
+              </div>
+            `).join("")}
+          </div>
         </div>
 
         <!-- Subject-wise 1-1 Free Demo Papers -->
@@ -2297,7 +2326,184 @@
       `;
     }
 
-    function renderLeaderboardTab() {
+    
+    const DAILY_NEWS_ITEMS = [
+      {
+        id: "DN-2026-11-27-1",
+        date: "2026-11-27",
+        month: "2026-11",
+        category: "महाराष्ट्र व साहित्य",
+        title: "१०० व्या अखिल भारतीय मराठी साहित्य संमेलनाच्या अध्यक्षपदी डॉ. शरणकुमार लिंबाळे यांची निवड",
+        summary: "पुणे येथे २७ ते ३० जानेवारी २०२७ दरम्यान होणाऱ्या १०० व्या अखिल भारतीय मराठी साहित्य संमेलनाच्या अध्यक्षपदी ज्येष्ठ साहित्यिक डॉ. शरणकुमार लिंबाळे यांची निवड झाली आहे."
+      },
+      {
+        id: "DN-2026-11-26-1",
+        date: "2026-11-26",
+        month: "2026-11",
+        category: "कल्याणकारी योजना",
+        title: "दुष्काळग्रस्त शेतकरी कुटुंबांसाठी रिक्षा सन्मान योजना जाहीर",
+        summary: "दुष्काळग्रस्त भागातील अल्प व अत्यल्प भूधारक शेतकरी कुटुंबांना स्वयंरोजगारासाठी रिक्षा उपलब्ध करून देणारी योजना शासनाने जाहीर केली आहे."
+      },
+      {
+        id: "DN-2026-11-25-1",
+        date: "2026-11-25",
+        month: "2026-11",
+        category: "शासन निर्णय व कृषी",
+        title: "३३ जिल्ह्यांतील शेतकऱ्यांना पुढील तीन महिने मोफत धान्य वाटपास मंत्रिमंडळाची मान्यता",
+        summary: "राज्य मंत्रिमंडळाच्या बैठकीत ३३ जिल्ह्यांतील पात्र शेतकरी कुटुंबांना पुढील तीन महिन्यांसाठी मोफत धान्य वाटप करण्याचा निर्णय घेण्यात आला आहे."
+      },
+      {
+        id: "DN-2026-11-24-1",
+        date: "2026-11-24",
+        month: "2026-11",
+        category: "दिनविशेष",
+        title: "दिनविशेष: गुरु नानक जयंती व देव दीपावली",
+        summary: "कार्तिक पौर्णिमेनिमित्त शीख धर्माचे संस्थापक गुरु नानक देव यांची जयंती तसेच वाराणसी येथे देव दीपावली साजरी करण्यात आली."
+      }
+    ];
+
+    function getAllDailyNews() {
+      const autoList = Array.isArray(appState.autoDailyNews) ? appState.autoDailyNews : [];
+      const merged = [...autoList, ...DAILY_NEWS_ITEMS];
+      const seen = new Set();
+      return merged.filter(item => {
+        if (!item || !item.title) return false;
+        const key = `${item.date || ""}||${repairDevanagariText(item.title)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    async function fetchAutoDailyNewsFromCloudOrGitHub(silent = false) {
+      let loadedAny = false;
+      try {
+        const ghUrl = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}/daily-news/archive.json?t=${Date.now()}`;
+        const r = await fetch(ghUrl, { cache: "no-store" });
+        if (r.ok) {
+          const arr = await r.json();
+          if (Array.isArray(arr) && arr.length > 0) {
+            appState.autoDailyNews = arr;
+            loadedAny = true;
+          }
+        }
+      } catch (e) {}
+
+      if (!loadedAny && appState.supabaseUrl && appState.supabaseKey) {
+        try {
+          const r2 = await fetch(`${appState.supabaseUrl}/rest/v1/mpsc_daily_news?select=*&order=date.desc&limit=100`, {
+            headers: { apikey: appState.supabaseKey, Authorization: `Bearer ${appState.supabaseKey}` }
+          });
+          if (r2.ok) {
+            const rows = await r2.json();
+            if (Array.isArray(rows) && rows.length > 0) {
+              appState.autoDailyNews = rows;
+              loadedAny = true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (loadedAny) {
+        saveState();
+        if (appState.activeTab === "dailynews") renderAll();
+        if (!silent) showToast("ताज्या चालू घडामोडी व दिनविशेष अपडेट झाले!");
+      } else if (!silent) {
+        showToast("सध्या डिफॉल्ट/स्थानिक चालू घडामोडी व दिनविशेष यादी दाखवत आहे.");
+      }
+    }
+
+    function downloadNewsAsPdf(labelText, itemsList) {
+      if (!Array.isArray(itemsList) || !itemsList.length) {
+        showToast("PDF बनवण्यासाठी नोंदी उपलब्ध नाहीत.");
+        return;
+      }
+      const win = window.open("", "_blank");
+      if (!win) {
+        showToast("पॉप-अप ब्लॉक असल्यास परवानगी द्या.");
+        return;
+      }
+      win.document.write(`
+        <!DOCTYPE html><html lang="mr"><head><meta charset="UTF-8"><title>${labelText}</title>
+        <style>
+          body{font-family:'Noto Sans Devanagari',sans-serif;padding:24px;color:#0f172a;line-height:1.65;}
+          h1{font-size:20px;border-bottom:2px solid #1d4ed8;padding-bottom:8px;margin-bottom:14px;}
+          .box{border:1px solid #cbd5e1;border-radius:10px;padding:12px 14px;margin-bottom:12px;background:#fff;}
+          .meta{font-size:12px;color:#475569;font-weight:700;margin-bottom:4px;}
+          @media print {.noprint{display:none;}}
+        </style></head><body>
+        <div class="noprint" style="margin-bottom:12px;"><button onclick="window.print()" style="padding:8px 14px;font-weight:700;cursor:pointer;">⬇ PDF सेव्ह / प्रिंट करा</button></div>
+        <h1>MPSC Sarav 2026-27 — ${labelText}</h1>
+        ${itemsList.map(n => `
+          <div class="box">
+            <div class="meta">${n.date || "-"} • ${repairDevanagariText(n.category || "चालू घडामोडी")}</div>
+            <h3 style="margin:4px 0;font-size:15px;">${repairDevanagariText(n.title || "")}</h3>
+            <p style="margin:0;font-size:13.5px;color:#334155;">${repairDevanagariText(n.summary || "")}</p>
+          </div>
+        `).join("")}
+        </body></html>
+      `);
+      win.document.close();
+    }
+
+    function renderDailyNewsTab() {
+      const allNews = getAllDailyNews();
+      const selectedMonth = appState.newsMonthFilter || "ALL";
+      const selectedDate = appState.newsDateFilter || "ALL";
+      const months = Array.from(new Set(allNews.map(n => n.month).filter(Boolean))).sort().reverse();
+      const dates = Array.from(new Set(allNews.map(n => n.date).filter(Boolean))).sort().reverse();
+
+      const filtered = allNews.filter(n => {
+        if (selectedMonth !== "ALL" && n.month !== selectedMonth) return false;
+        if (selectedDate !== "ALL" && n.date !== selectedDate) return false;
+        return true;
+      });
+
+      const pdfLabel = selectedDate !== "ALL"
+        ? `दैनिक घडामोडी व दिनविशेष (${selectedDate})`
+        : (selectedMonth !== "ALL" ? `मासिक घडामोडी व दिनविशेष (${selectedMonth})` : "संपूर्ण चालू घडामोडी व दिनविशेष");
+
+      return `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div>
+              <span class="badge badge-teal">Daily + Dinvishesh + Month-wise • Cloud Ready</span>
+              <h2 class="card-title" style="margin-top:4px;">📰 महत्त्वाच्या मराठी चालू घडामोडी व दिनविशेष</h2>
+              <p class="card-sub" style="margin-bottom:0;">महिना किंवा तारीख निवडून महत्त्वाच्या नोंदी वाचा आणि एका क्लिकवर PDF डाउनलोड करा.</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <select class="select" onchange="appState.newsMonthFilter=this.value;appState.newsDateFilter='ALL';saveState();renderAll();">
+                <option value="ALL" ${selectedMonth==="ALL"?"selected":""}>सर्व महिने</option>
+                ${months.map(m => `<option value="${m}" ${selectedMonth===m?"selected":""}>महिना: ${m}</option>`).join("")}
+              </select>
+              <select class="select" onchange="appState.newsDateFilter=this.value;saveState();renderAll();">
+                <option value="ALL" ${selectedDate==="ALL"?"selected":""}>सर्व तारखा</option>
+                ${dates.map(d => `<option value="${d}" ${selectedDate===d?"selected":""}>तारीख: ${d}</option>`).join("")}
+              </select>
+              <button class="btn btn-accent btn-sm" onclick="fetchAutoDailyNewsFromCloudOrGitHub(false)">🔄 Cloud/GitHub अपडेट</button>
+              <button class="btn btn-primary btn-sm" id="downloadNewsPdfBtn">📄 PDF डाउनलोड करा</button>
+            </div>
+          </div>
+
+          <div class="stat-box" style="margin-bottom:12px;background:#eff6ff;border-color:#93c5fd;font-size:12.5px;">
+            <strong>☁️ Cloud & Auto-Sync Status:</strong> पोर्टल <code>${appState.supabaseUrl ? "Supabase (" + appState.supabaseUrl.replace(/^https?:\/\//, "") + ")" : "Local"}</code> व GitHub (<code>${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}</code>) वरून रोजचे अपडेट्स व PDF संकलन जोडण्यासाठी तयार आहे.
+          </div>
+
+          ${filtered.length ? filtered.map(n => `
+            <div class="stat-box" style="margin-bottom:10px;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <span class="badge badge-blue">${n.date || "-"}</span>
+                <span class="badge badge-amber">${repairDevanagariText(n.category || "चालू घडामोडी")}</span>
+              </div>
+              <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${repairDevanagariText(n.title || "")}</div>
+              <div style="font-size:13px;color:var(--muted);">${repairDevanagariText(n.summary || "")}</div>
+            </div>
+          `).join("") : `<p style="font-size:13px;color:var(--muted);">निवडलेल्या तारीख/महिन्यासाठी नोंदी नाहीत.</p>`}
+        </div>
+      `;
+    }
+
+function renderLeaderboardTab() {
       const sorted = [...appState.leaderboard].sort((a, b) => b.score - a.score);
       return `<div class="card"><h2 class="card-title">🏆 गुणवत्ता यादी (Leaderboard)</h2><p class="card-sub">तुमचे गुण आणि अचूकता यादीत नोंदवली जाते.</p><table><thead><tr><th>क्र.</th><th>विद्यार्थी</th><th>जिल्हा</th><th>चाचणी</th><th>गुण</th><th>अचूकता</th></tr></thead><tbody>${sorted.map((row, i) => `<tr><td><strong>#${i + 1}</strong></td><td>${row.student_name}</td><td>${row.district}</td><td>${row.mode}</td><td><strong>${row.score} / ${row.total}</strong></td><td>${row.accuracy}%</td></tr>`).join("")}</tbody></table></div>`;
     }
@@ -2499,7 +2705,8 @@
 
           ${aTab === "cloud" ? `
             <div class="stat-box" style="margin-bottom:14px;">
-              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud Sync</h3>
+              <h3 style="margin:0 0 8px;font-size:15px;">Supabase Cloud & GitHub Auto-Sync Details</h3>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Active Cloud URL: <code>${appState.supabaseUrl || "Not Set"}</code> • Repo: <code>${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME} (${GITHUB_REPO_BRANCH})</code> • Device: <code>${CURRENT_DEVICE_ID}</code></div>
               <div class="grid-2" style="margin-bottom:8px;">
                 <input id="sbUrlInput" name="sbUrlInput" class="input" value="${appState.supabaseUrl}" placeholder="Supabase Project URL" />
                 <input id="sbKeyInput" name="sbKeyInput" class="input" value="${appState.supabaseKey}" placeholder="Supabase Publishable Key" />
@@ -2534,6 +2741,7 @@
         case "mains": container.innerHTML = renderMainsExamTab(); break;
         case "topics": container.innerHTML = renderTopicsTab(); break;
         case "mistakes": container.innerHTML = renderMistakesTab(); break;
+        case "dailynews": container.innerHTML = renderDailyNewsTab(); setTimeout(() => { const b = document.getElementById("downloadNewsPdfBtn"); if (b) b.onclick = () => { const allN = getAllDailyNews(); const m = appState.newsMonthFilter || "ALL"; const d = appState.newsDateFilter || "ALL"; const list = allN.filter(x => (m==="ALL"||x.month===m) && (d==="ALL"||x.date===d)); const lbl = d!=="ALL" ? `दैनिक घडामोडी व दिनविशेष (${d})` : (m!=="ALL" ? `मासिक घडामोडी व दिनविशेष (${m})` : "संपूर्ण चालू घडामोडी व दिनविशेष"); downloadNewsAsPdf(lbl, list); }; }, 0); break;
         case "pdfs": container.innerHTML = renderPdfsTab(); break;
         case "leaderboard": container.innerHTML = renderLeaderboardTab(); break;
         case "admin": container.innerHTML = renderAdminTab(); break;
