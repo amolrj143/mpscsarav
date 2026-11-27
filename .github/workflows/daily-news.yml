@@ -1,0 +1,38 @@
+name: Daily MPSC Current Affairs & Dinvishesh Sync
+
+on:
+  schedule:
+    - cron: '30 1 * * *' # Runs daily around 07:00 AM IST (01:30 UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-daily-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests feedparser beautifulsoup4
+
+      - name: Fetch news, dinvishesh & sync JSON
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/fetch_daily_news.py
+
+      - name: Commit updated JSON to GitHub
+        run: |
+          git config --global user.name "MPSC Sarav Bot"
+          git config --global user.email "bot@mpscsarav.local"
+          git add daily-news/ || true
+          git diff --staged --quiet || git commit -m "chore: daily MPSC news & dinvishesh $(date -u +'%Y-%m-%d')"
+          git push
